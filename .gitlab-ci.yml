@@ -1,0 +1,13 @@
+variables:
+  SRC_DIRECTORY: "nota_bene"
+  CI_TEMPLATE: "datainnovatielab/policy/ci-templates"
+
+include:
+  - project: "$CI_TEMPLATE"
+    ref: main
+    file:
+      - "/templates/python/scheduler.yml"
+      - "/templates/python/static_analysis.yml"
+      - "/templates/python/test.yml"
+      - "/templates/python/release.yml"
+      - "/templates/python/build_and_deploy.yml"

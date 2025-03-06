@@ -1,0 +1,78 @@
+default_language_version:
+    python: python3
+
+repos:
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+        name: isort (python)
+        description: Sort python imports.
+        language_version: python3
+-   repo: https://github.com/ambv/black
+    rev: 24.8.0
+    hooks:
+    - id: black
+      name: black
+      description: "Black: The uncompromising Python code formatter"
+      language_version: python3
+-   repo: https://github.com/PyCQA/bandit
+    rev: '1.7.9'
+    hooks:
+    -   id: bandit
+        name: bandit
+        description: Find common security issues in your Python code using bandit
+        args: [-l, -r, -x, tests]
+        files: .py$
+        additional_dependencies: ["bandit[toml]"]
+-   repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+    -   id: flake8
+        name: flake8
+        description: Check python style with flake8.
+        exclude: ^docs/|__init__.py|^tests/
+        additional_dependencies: ["flake8-docstrings",
+                                  "flake8-bugbear",
+                                  "flake8-comprehensions",
+                                  "flake8-pyproject"]
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: check-merge-conflict
+        name: check-merge-conflict
+        description: Check for files that contain merge conflict strings.
+    -   id: debug-statements
+        name: debug-statements
+        description: Check for debugger imports and py37+ breakpoint() calls in python source.
+    -   id: detect-private-key
+        name: detect-private-key
+        description: Checks for the existence of private keys.
+    -   id: end-of-file-fixer
+        name: end-of-file-fixer
+        description: Makes sure files end in a newline and only a newline.
+    -   id: trailing-whitespace
+        name: trailing-whitespace
+        description: Trims trailing whitespace
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+    -   id: check-json
+        name: check-json
+        description: Attempts to load all json files to verify syntax.
+    -   id: check-yaml
+        name: check-yaml
+        description: Attempts to load all yaml files to verify syntax.
+    -   id: requirements-txt-fixer
+        name: requirements-txt-fixer
+        description: Sorts entries in requirements.txt
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.11.1'
+    hooks:
+    -   id: mypy
+-   repo: https://github.com/rstcheck/rstcheck
+    rev: 'v6.2.4'
+    hooks:
+    -   id: rstcheck
+        additional_dependencies: [sphinx]
+        args: [--ignore-messages, "Duplicate (implicit|explicit) target name"]
+        exclude: ^docs/
