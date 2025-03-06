@@ -10,7 +10,10 @@ from io import BytesIO
 import os
 import subprocess
 from pathlib import Path
-import whisper
+try:
+    import whisper
+except:
+    print('pip install openai-whisper')
 
 import streamlit as st
 from openai import OpenAI
