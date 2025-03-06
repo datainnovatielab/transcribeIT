@@ -1,7 +1,7 @@
 """Page to submit audio for transcription."""
 
 import streamlit as st
-import whisper
+# import whisper
 
 from nota_bene.utils import switch_page_button, create_audio_chunks
 from nota_bene.utils import transcribe_audio_from_path, transcribe_local
