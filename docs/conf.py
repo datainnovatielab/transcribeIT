@@ -197,7 +197,7 @@ texinfo_documents = [
         "Nota Bene Documentation",
         author,
         "nota-bene",
-        "AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en OpenAI's GPT-4o-mini voor opstellen van notulen.",
+        "AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en het grote taal model voor opstellen van notulen.",
         "Miscellaneous",
     )
 ]

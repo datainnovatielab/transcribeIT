@@ -4,7 +4,7 @@ Nota Bene
 
 .. begin-inclusion-intro-marker-do-not-remove
 
-AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en OpenAI's GPT-4o-mini voor opstellen van notulen.
+AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en grote taal modellen voor opstellen van notulen.
 
 .. end-inclusion-intro-marker-do-not-remove
 

@@ -26,7 +26,7 @@ helpt je om je volledig te focussen op de inhoud van het gesprek.
    Whisper zet je audio snel en nauwkeurig om in tekst.
 
 4. **Slimme samenvatting en inzichten**:
-   GPT-4o-mini analyseert de transcriptie en levert overzichtelijke samenvattingen en
+   Het grote taal model analyseert de transcriptie en levert overzichtelijke samenvattingen en
    belangrijke actiepunten.
 
 ---
