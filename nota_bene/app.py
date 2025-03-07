@@ -21,6 +21,10 @@ def main():
                 st.Page("app_pages/minutes_prompt.py", title="Instructies"),
                 st.Page("app_pages/create_minutes.py", title="Resultaat"),
             ],
+            "Configurations": [
+                st.Page("app_pages/configurations.py", title="Configurations"),
+                ]
+
         }
     )
 
