@@ -133,6 +133,8 @@ def init_session_keys():
     init_session_key("minutes")
     init_session_key("temp_dir", default_value=tempfile.mkdtemp())
     init_session_key("audio_filepath", default_value=None)
+    init_session_key("endpoints", default_value=['http://localhost:1234/v1/chat/completions', 'http://localhost:11434/api/generate'])
+    init_session_key("endpoint", default_value=None)
 
 
 def write_audio_to_disk(audio, filepath):
@@ -222,7 +224,7 @@ def compress_audio(file_path, bitrate='16k'):
         output_file = os.path.join(os.path.split(file_path)[0], filename_new)
 
         if not os.path.isfile(output_file):
-            with st.spinner("Wait for it... compressing audio..", show_time=True):
+            with st.spinner("Wait for it... compressing audio.."):
                 command = [
                     'ffmpeg',
                     '-i', file_path,  # Input file
@@ -236,3 +238,43 @@ def compress_audio(file_path, bitrate='16k'):
                 # st.write(output_file)
                 # st.write(os.path.getsize(output_file))
         return output_file
+
+
+#%% Define API-based Agent
+class API_LLM:
+    """ The Agent class.
+    1. Go the LM-studio.
+    2. Go to left panel and select developers mode
+    3. On top select your model of interest
+    4. Then go to settings in the top bar
+    5. Enable "server on local network" if you need
+    6. Enable Running
+
+    Examples
+    --------
+    > model=API_LLM()
+    > model=API_LLM(model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions")
+    > model.run('hello who are you?')
+
+    """
+    def __init__(self, model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions", temperature=0.7):
+        self.model_id = model_id
+        self.api_url = api_url
+        self.temperature = temperature
+    
+    def run(self, prompt):
+        import requests
+        
+        headers = {"Content-Type": "application/json"}
+        data = {
+            "model": self.model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.temperature
+        }
+
+        response = requests.post(self.api_url, headers=headers, json=data)
+        if response.status_code == 200:
+            return response.json().get('choices', [{}])[0].get('message', {}).get('content', "No response")
+        else:
+            return f"Error: {response.status_code} - {response.text}"
+

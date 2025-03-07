@@ -14,7 +14,7 @@ from nota_bene.utils import transcribe_audio_from_path, transcribe_local
 def transcribe_button():
     """Check for API key, and present transcribe button if present."""
 
-    user_select = st.selectbox(label='Select Whisper model', options=["base", "tiny", "small", "medium", "large", "OpenAI"], index=0)
+    user_select = st.selectbox(label='Select Whisper model', options=["base", "tiny", "small", "medium", "large", "turbo", "OpenAI"], index=0)
     user_press = st.button("Transcriberen.")
     # st.markdown(st.session_state['temp_dir'])
 
@@ -62,13 +62,26 @@ def transcribe_button():
 
 
 st.subheader('Start Transcribing audio file')
+
 if st.session_state.audio is None:
-    switch_page_button("app_pages/upload_audio.py", text="Upload eerst een audio file.")
-elif st.session_state.transcript is None:
+    st.write("**Transcript:**")
+    user_transcript = st.text_area(label='Transcript', value='', height=400, label_visibility='collapsed')
+    if user_transcript != '':
+        st.session_state['transcript'] = user_transcript
+elif st.session_state['transcript'] is None:
     transcribe_button()
 
-if st.session_state.transcript:
+if st.session_state['transcript']:
     st.write("**Transcript:**")
-    with st.container(height=400, border=True):
-        st.write(st.session_state.transcript)
-    switch_page_button("app_pages/minutes_prompt.py")
+    # with st.container(height=400, border=True):
+        # st.write(st.session_state['transcript'])
+    user_transcript = st.text_area(label='Transcript', value=st.session_state['transcript'], height=400, label_visibility='collapsed')
+    
+    col1, col2 = st.columns(2)
+    
+    user_update = col1.button('Update text')
+
+    if user_update and user_transcript != '' and user_transcript != st.session_state['transcript']:
+        st.session_state['transcript'] = user_transcript
+    with col2:
+        switch_page_button("app_pages/minutes_prompt.py")
