@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nota-bene"
 dynamic = ["version", "readme"]
-description = "AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en het grote taal model voor opstellen van notulen."
+description = "AI geassisteerde notuleertool. Maakt gebruik van OpenAI's whisper voor transcriberen, en taal modellen voor opstellen van notulen. Het model werkt zowel lokaal (offline) als met de openAI service."
 keywords = ["nota-bene"]
 authors = [
     {name = "Data- en Innovatielab", email = "codebase.dilab@minienw.nl"},
