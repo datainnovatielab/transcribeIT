@@ -7,13 +7,7 @@ import shutil
 import numpy as np
 from nota_bene.utils import write_audio_to_disk, file_to_bytesio, combine_audio_files, compress_audio
 
-# 1. Upload all audio files and order accordingly.
-# 2. Store to disk and name to 01_ etc
-# 3. Resample to 16k
-# 4. Combine all audio files into one big audio file.
-# 5. Split audio file into parts of 20Mb
-# 6. Transcribe
-
+# %%
 def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
     output_file, audio = None, None
     # Ensure ffmpeg is installed and accessible
@@ -52,29 +46,48 @@ def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
 
     return output_file
 
+# %%
+def run_main():
+    """Run main file.
 
-with st.container(border=True):
-    st.subheader('Pre processing audio files.')
-    st.caption('Set the order of the audio files.')
+    1. Upload all audio files and order accordingly.
+    2. Store to disk and name to 01_ etc
+    3. Resample to 16k
+    4. Combine all audio files into one big audio file.
+    5. Split audio file into parts of 20Mb
+    6. Transcribe
 
-    # File uploader with support for .m4a files
-    uploaded_files = st.file_uploader("Upload audio files", type=["mp3", "wav", "m4a"], accept_multiple_files=True)
+    """
+    with st.container(border=True):
+        st.subheader('Upload audio files')
+        st.caption('Upload audio files and set the order.')
 
-    # Upload and process audio
-    output_file = audio_processing(uploaded_files, st.session_state['temp_dir'], bitrate='16k')
+        # File uploader with support for .m4a files
+        uploaded_files = st.file_uploader("Upload audio files", type=["mp3", "wav", "m4a"], accept_multiple_files=True)
 
-    # st.write(st.session_state.audio)
+        # Upload and process audio
+        output_file = audio_processing(uploaded_files, st.session_state['temp_dir'], bitrate='16k')
 
-    if output_file:
-        st.success('Processing Done. Audio files are merged.')
-        # Create bytesIO
-        st.session_state.audio = file_to_bytesio(output_file)
-        st.session_state['audio_filepath'] = output_file
-        # st.info(output_file)
-        # switch_page_button("app_pages/upload_audio.py")
-        # switch_page_button("app_pages/transcribe.py")
+        # st.write(st.session_state.audio)
 
-    if st.session_state.audio is not None:
-        st.write("Je hebt dit audiobestand geüpload:")
-        st.audio(st.session_state.audio)
-        switch_page_button("app_pages/transcribe.py")
+        if output_file:
+            st.success('Processing Done. Audio files are merged.')
+            # Create bytesIO
+            st.session_state.audio = file_to_bytesio(output_file)
+            st.session_state['audio_filepath'] = output_file
+            # st.info(output_file)
+            # switch_page_button("app_pages/upload_audio.py")
+            # switch_page_button("app_pages/transcribe.py")
+
+        if st.session_state.audio is not None:
+            st.write("Je hebt dit audiobestand geüpload:")
+            st.audio(st.session_state.audio)
+            switch_page_button("app_pages/transcribe.py")
+
+    with st.container(border=True):
+        st.subheader('Use recording')
+        st.caption('Upload audio files and set the order.')
+
+
+# %%
+run_main()

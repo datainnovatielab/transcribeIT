@@ -50,9 +50,8 @@ gestructureerde en gepolijste notulen volgens de bovenstaande richtlijnen.
 
 Wanneer je klaar bent, geef je alleen het uiteindelijke verslag als output, zonder
 verdere uitleg.
+
 """
-
-
 def switch_page_button(page: st.Page, text: str | None = None):
     """
     Generate a button in the Streamlit app to switch to another page.

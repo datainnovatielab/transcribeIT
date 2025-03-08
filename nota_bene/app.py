@@ -9,12 +9,14 @@ import shutil
 
 init_session_keys()
 
+# %%
 def main():
     pg = st.navigation(
         {
             "Main": [st.Page("app_pages/intro.py", title="Introductie")],
             "Audio": [
-                st.Page("app_pages/audio_preprocessing.py", title="Upload Audio"),
+                st.Page("app_pages/audio_recording.py", title="Record Audio"),
+                st.Page("app_pages/audio_preprocessing.py", title="Upload/ Select recordings"),
                 st.Page("app_pages/transcribe.py", title="Transcriberen"),
             ],
             "Notuleren": [
@@ -62,6 +64,7 @@ def main():
     pg.run()
 
 
+# %%
 def main_run():
     """Function to run the Streamlit app from the command line."""
     module_path = os.path.abspath(os.path.dirname(__file__))
@@ -71,5 +74,6 @@ def main_run():
     except subprocess.CalledProcessError as e:
         print(f"Failed to run Streamlit app: {e}")
 
+# %%
 if __name__ == "__main__":
     main()
