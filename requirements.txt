@@ -5,4 +5,4 @@ NumPy==2.1
 ffmpeg-setpath
 #setuptools-rust
 openai-whisper
-streamlit-audiorec
+st_audiorec
