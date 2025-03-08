@@ -9,6 +9,8 @@ dist
 __pycache__
 
 .streamlit/secrets.toml
+audio_storage/*
+temp_audio/*
 
 htmlcov
 .coverage
