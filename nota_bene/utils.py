@@ -124,16 +124,23 @@ def init_session_key(key: str, default_value: str | None = None):
 
 def init_session_keys():
     """Initialize multiple session state keys with default values."""
+    temp_dir = os.path.join(tempfile.gettempdir(), "notabena")
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
     init_session_key("audio")
     init_session_key("transcript")
     init_session_key("model", default_value="gpt-4o-mini")
     init_session_key("prompt", default_value=FULL_PROMPT)
     init_session_key("openai_api_key", default_value=st.secrets["openai"]["key"])
     init_session_key("minutes")
-    init_session_key("temp_dir", default_value=tempfile.mkdtemp())
+    init_session_key("temp_dir", default_value=temp_dir)
     init_session_key("audio_filepath", default_value=None)
     init_session_key("endpoints", default_value=['http://localhost:1234/v1/chat/completions', 'http://localhost:11434/api/generate'])
     init_session_key("endpoint", default_value=None)
+    init_session_key("audio_recording", default_value={})
+    init_session_key("audio_order", default_value=[])
+    init_session_key("bitrate", default_value='24k')
 
 
 def write_audio_to_disk(audio, filepath):
@@ -153,7 +160,7 @@ def file_to_bytesio(file_path):
         return bytes_io
 
 
-def create_audio_chunks(temp_dir, file_path, segment_time=1800):
+def create_audio_chunks(temp_dir, file_path, segment_time=1800, ext='m4a'):
     if not file_path:
         return None
 
@@ -183,9 +190,10 @@ def create_audio_chunks(temp_dir, file_path, segment_time=1800):
 
     return chunk_file_paths
 
-def combine_audio_files(audio_files, temp_dir, bitrate):
+def combine_audio_files(audio_files, temp_dir, bitrate, ext='.m4a'):
     # Define the path for the uploaded audio file
-    output_file = os.path.join(temp_dir, f'audio_file_stacked_{bitrate}' + '.m4a')
+    # output_file = os.path.join(temp_dir, f'audio_file_stacked_{bitrate}' + '.m4a')
+    output_file = os.path.join(temp_dir, f'audio_file_stacked_{bitrate}' + ext)
     # file_txt = 'file_list.txt'
     file_txt = os.path.join(temp_dir, 'file_list.txt')
     if os.path.isfile(output_file):
@@ -237,6 +245,39 @@ def compress_audio(file_path, bitrate='16k'):
                 # st.write(output_file)
                 # st.write(os.path.getsize(output_file))
         return output_file
+
+
+def convert_wav_to_m4a(wav_filepath, bitrate='128k'):
+    """Convert a WAV file to M4A format using ffmpeg.
+
+    Args:
+        wav_filepath (str): Path to the input .wav file.
+
+    Returns:
+        str: Path to the converted .m4a file.
+    """
+    if not os.path.isfile(wav_filepath):
+        raise FileNotFoundError(f"File not found: {wav_filepath}")
+
+    # Create output filename with .m4a extension
+    m4a_filepath = os.path.splitext(wav_filepath)[0] + ".m4a"
+
+    # Construct the ffmpeg command
+    command = [
+        "ffmpeg",
+        "-i", wav_filepath,  # Input file
+        "-c:a", "aac",       # Convert to AAC codec
+        "-b:a", bitrate,      # Set audio bitrate (adjust if needed)
+        "-movflags", "+faststart",  # Optimize for streaming
+        m4a_filepath         # Output file
+    ]
+
+    # Run the ffmpeg command
+    # subprocess.run(command, check=True)
+    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+
+
+    return m4a_filepath
 
 
 #%% Define API-based Agent

@@ -23,9 +23,9 @@ dependencies = [
     "openai>=1.60.0",
     "streamlit>=1.41.1",
     "ffmpeg-setpath",
+    "streamlit-audiorec",
     # "setuptools-rust",
     # "openai-whisper",
-    "streamlit-audiorec",
 ]
 requires-python = ">=3.10"
 
