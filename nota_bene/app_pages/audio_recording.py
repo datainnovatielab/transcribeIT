@@ -26,7 +26,7 @@ def main():
 
         # Show message after recording
         if wav_audio_data is not None:
-            st.caption('You can now save this audio fragment and use it for transcription.')
+            st.caption('Save this audio fragment in case you want to use it for transcription.')
 
         if wav_audio_data is not None and st.button('Save this audio fragment for transcription'):
             audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -57,7 +57,7 @@ def main():
 def set_order_recordings():
     if len(st.session_state['audio_recording']) > 0:
         with st.container(border=True):
-            st.subheader('Sort saved recordings')
+            st.subheader('Sort recordings')
             st.caption(f"In total there are {len(st.session_state['audio_recording'])} audio recordings saved. You can remove or reorder them accordingly.")
             for key in st.session_state['audio_order']:  # Maintain order using the list
                 col1, col2, col3, col4, col5 = st.columns([0.5, 0.3, 0.1, 0.1, 0.1])

@@ -26,7 +26,7 @@ def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
             default=[file.name for file in uploaded_files]
         )
 
-    if st.button('Process') and uploaded_files:
+    if uploaded_files and st.button('Volgende stap: Combineer de audio bestanden in deze volgorde.') and uploaded_files:
         file_list = []
         for i, filename in enumerate(uploaded_files):
             # Get the correct order
@@ -79,11 +79,13 @@ def run_main():
             # switch_page_button("app_pages/upload_audio.py")
             # switch_page_button("app_pages/transcribe.py")
 
-        if st.session_state['audio'] is not None:
-            with st.container(border=True):
-                st.write("Je hebt dit audiobestand geüpload:")
-                st.audio(st.session_state['audio'])
-                switch_page_button("app_pages/transcribe.py")
+    if st.session_state['audio'] is not None:
+        with st.container(border=True):
+            st.subheader('Final audio fragment')
+            # st.write("Je hebt dit audiobestand geüpload:")
+            st.caption("This is the final combined audio fragment.")
+            st.audio(st.session_state['audio'])
+            switch_page_button("app_pages/transcribe.py")
 
     # with st.container(border=True):
     #     st.subheader('Use recording')
