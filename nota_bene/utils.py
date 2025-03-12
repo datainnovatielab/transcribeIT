@@ -255,7 +255,7 @@ def compress_audio(file_path, bitrate='16k'):
         return output_file
 
 
-def convert_wav_to_m4a(wav_filepath, bitrate='128k'):
+def convert_wav_to_m4a(wav_filepath, output_directory=None, bitrate='128k', overwrite=False):
     """Convert a WAV file to M4A format using ffmpeg.
 
     Args:
@@ -267,23 +267,43 @@ def convert_wav_to_m4a(wav_filepath, bitrate='128k'):
     if not os.path.isfile(wav_filepath):
         raise FileNotFoundError(f"File not found: {wav_filepath}")
 
-    # Create output filename with .m4a extension
-    m4a_filepath = os.path.splitext(wav_filepath)[0] + ".m4a"
+    # Get file ext and file path
+    _, ext = os.path.splitext(wav_filepath)
 
-    # Construct the ffmpeg command
-    command = [
-        "ffmpeg",
-        "-i", wav_filepath,  # Input file
-        "-c:a", "aac",       # Convert to AAC codec
-        "-b:a", bitrate,      # Set audio bitrate (adjust if needed)
-        "-movflags", "+faststart",  # Optimize for streaming
-        m4a_filepath         # Output file
-    ]
+    # Convert wav
+    if ext == '.wav':
+        print('>convert_wav_to_m4a')
+        # Set new output directory
+        if output_directory is not None and os.path.exists(output_directory) and os.path.isdir(output_directory):
+            _, filename = os.path.split(wav_filepath)
+            # Create output filename with .m4a extension
+            m4a_filepath = os.path.join(output_directory, os.path.basename(wav_filepath))
+            m4a_filepath = os.path.splitext(m4a_filepath)[0] + ".m4a"
+        else:
+            # Create output filename with .m4a extension
+            m4a_filepath = os.path.splitext(wav_filepath)[0] + ".m4a"
 
-    # Run the ffmpeg command
-    # subprocess.run(command, check=True)
-    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        if overwrite and os.path.isfile(m4a_filepath):
+            os.remove(m4a_filepath)
+        elif (not overwrite) and os.path.isfile(m4a_filepath):
+            st.warning(f'File found on disk; it is already converted {m4a_filepath}')
+            return None
 
+        # Construct the ffmpeg command
+        command = [
+            "ffmpeg",
+            "-i", wav_filepath,  # Input file
+            "-c:a", "aac",       # Convert to AAC codec
+            "-b:a", bitrate,      # Set audio bitrate (adjust if needed)
+            "-movflags", "+faststart",  # Optimize for streaming
+            m4a_filepath         # Output file
+        ]
+
+        # Run the ffmpeg command
+        # subprocess.run(command, check=True)
+        subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    else:
+        m4a_filepath = wav_filepath
 
     return m4a_filepath
 
