@@ -19,8 +19,8 @@ def main():
     if 'audio_order' not in st.session_state:
         st.session_state['audio_order'] = []
 
-    with st.container(border=True):
-        st.caption('Use the buttons for navigation.')
+    with st.expander('Record audio'):
+        st.caption('Use the buttons for navigation. Note that recordings from laptops usually ends up in poor audio quality, hence poor transcription results. An external microphone is then recommended.')
         # Audio panel
         wav_audio_data = st_audiorec()
 
@@ -34,15 +34,16 @@ def main():
             st.session_state['audio_order'].append(audioname)
             # st.info(f"Audio fragment number {len(st.session_state['audio_recording'].keys())-1} audio fragment(s) is saved.")
 
+    # Add by pathname
+    add_audio_from_path()
     # Set the order of the recordings
     user_button_process = set_order_recordings()
+
     # Process the audio recordings
     with st.spinner():
         output_file = process_audio_recordings(user_button_process, bitrate=st.session_state['bitrate'])
 
     if output_file:
-        # st.success('Processing Done. Audio files are merged.')
-        # Create bytesIO
         st.session_state['audio'] = file_to_bytesio(output_file)
         st.session_state['audio_filepath'] = output_file
 
@@ -80,12 +81,11 @@ def process_audio_recordings(user_button_process, bitrate='24k'):
     output_file = None
 
     if len(st.session_state['audio_recording']) > 0 and user_button_process:
-        # st.info('process now')
         # st.write(st.session_state['audio_recording'].keys())
         # st.write(st.session_state['audio_order'])
 
-        file_list = []
         ext = '.wav'
+        file_list = []
         for i, filename in enumerate(st.session_state['audio_order']):
             # st.write(f'Working on {filename}')
             # Get the correct order
@@ -106,6 +106,35 @@ def process_audio_recordings(user_button_process, bitrate='24k'):
     return output_file
 
 
+#%%
+def add_audio_from_path():
+    """
+    Convert wav file to m4a.
+
+    """
+    with st.expander('Add audio files directly from path'):
+        with st.container(border=False):
+            st.caption('Add audio file by using the pathname.')
+            # Create text input
+            user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
+            add_button = st.button('Add audio file')
+    
+            # Start conversio and compression
+            if add_button and user_filepath != '' and os.path.isfile(user_filepath):
+                with st.spinner('In progress.. Be patient and do not press anything..'):
+                    # Convert to m4a
+                    m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['temp_dir'], bitrate=st.session_state['bitrate'], overwrite=True)
+                    st.write(m4a_filepath)
+                    # Read m4a file
+                    # with open(m4a_filepath, 'rb') as file:
+                    #     audiobyes = file.read()
+                    audiobyes = file_to_bytesio(m4a_filepath)
+                    # Store in session
+                    audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    st.session_state['audio_recording'][audioname] = audiobyes
+                    st.session_state['audio_order'].append(audioname)
+
+
 # %%
 def write_recording_to_disk(filepath, wav_audio, convert_to_m4a=True, bitrate='128k'):
     # Save wav file to disk
@@ -113,7 +142,7 @@ def write_recording_to_disk(filepath, wav_audio, convert_to_m4a=True, bitrate='1
         f.write(wav_audio)
     # Convert wav to m4a
     if convert_to_m4a:
-        filepath = convert_wav_to_m4a(filepath, bitrate=bitrate)
+        filepath = convert_wav_to_m4a(filepath, bitrate=bitrate, overwrite=True)
     # Return
     return filepath
 
