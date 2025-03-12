@@ -152,12 +152,19 @@ def write_audio_to_disk(audio, filepath):
 
 
 def file_to_bytesio(file_path):
-    if file_path is not None:
+    if file_path is not None and os.path.isfile(file_path):
+        # Get file ext and file path
+        _, ext = os.path.splitext(file_path)
+
         # Open the file and read it into a BytesIO object
         with open(file_path, 'rb') as file:
-            file_data = file.read()
+            bytes_io = file.read()
+
         # Create a BytesIO buffer with the file data
-        bytes_io = BytesIO(file_data)
+        if ext == '.wav':
+            bytes_io = BytesIO(bytes_io)
+
+        # Return
         return bytes_io
 
 
