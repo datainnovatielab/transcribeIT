@@ -124,7 +124,8 @@ def init_session_key(key: str, default_value: str | None = None):
 
 def init_session_keys():
     """Initialize multiple session state keys with default values."""
-    temp_dir = os.path.join(tempfile.gettempdir(), "notabena")
+    # temp_dir = os.path.join(tempfile.gettempdir(), "notabena")
+    temp_dir = tempfile.TemporaryDirectory().name + "_notabena"
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
