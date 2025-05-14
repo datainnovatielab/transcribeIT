@@ -76,39 +76,20 @@ def sidebar():
     if project_name != st.session_state["project_name"]:
         # Set session states for paths
         set_project_paths(project_name)
-
         # Load the session states
         if os.path.isfile(st.session_state["save_path"]):
             # Load pickle file
             session_state = pypickle.load(st.session_state["save_path"])
             for key, value in session_state.items():
                 st.session_state[key] = value
-
-            # Check whether audio file still exists in directory: audio_file_stacked_24k.m4a
-            # audio_filename = 'audio_file_stacked_' + st.session_state['bitrate'] + '.m4a'
-            # audio_pathname = os.path.join(st.session_state["project_path"], audio_filename)
-            # if os.path.isfile(audio_pathname):
-            #     st.session_state['audio'] = file_to_bytesio(audio_pathname)
-            #     st.session_state['audio_filepath'] = audio_pathname
-
         # Refresh screen
         st.rerun()
-
-
-    # col2.caption('Load Project')
-    # if col2.button("Load", use_container_width=True):
-    #     st.sidebar.info(f'loading {project_name}')
-    #     # st.rerun()
 
     # col1, col2 = st.sidebar.columns([0.5, 0.5])
     col2.caption('Create New Project')
     if col2.button("Create New Project", use_container_width=True):
         enter_project_name()
         init_session_keys(overwrite=True)
-
-    # col2.caption('Save Session Parameters')
-    # if col2.button("Save", use_container_width=True):
-    #     save_session(save_audio=True)
 
     st.sidebar.divider()
 
@@ -140,7 +121,6 @@ def sidebar():
             st.rerun()
     else:
         cols[0].button(f"Delete Project", type='primary', disabled=True)
-    # pg.run()
 
 
 # %%

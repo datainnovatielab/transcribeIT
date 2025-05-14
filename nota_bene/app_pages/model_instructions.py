@@ -66,5 +66,6 @@ def run_main():
         with col2:
             switch_page_button("app_pages/create_minutes.py", text='Next Step: Create Minute Notes', button_type='primary')
 
+
 # %%
 run_main()
