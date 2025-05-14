@@ -12,7 +12,12 @@ def main():
     Record audio from microphone and return the audio data while optionally saving to disk.
     """
 
-    st.header('Record audio')
+    if st.session_state['project_name']:
+        st.header('Record Audio For ' + st.session_state['project_name'], divider=True)
+    else:
+        with st.container(border=True):
+            st.info('Each project starts with a name. Create your new project at the left sidepanel.')
+            return
 
     if 'audio_recording' not in st.session_state:
         st.session_state['audio_recording'] = {}
@@ -49,12 +54,24 @@ def main():
 
     if st.session_state['audio'] is not None:
         with st.container(border=True):
-            st.subheader('Final audio fragment')
+            st.subheader('Final Audio File')
             st.caption("This is the final combined audio fragment that will be used for the transcription.")
             st.audio(st.session_state['audio'])
-            switch_page_button("app_pages/transcribe.py")
 
+        # with st.container(border=True):
+        #     col1, col2 = st.columns([0.5, 0.5])
+        #     with col1:
+        #         switch_page_button("app_pages/transcribe.py")
 
+    # Show continue button
+    with st.container(border=True):
+        col1, col2 = st.columns([0.5, 0.5])
+        with col1:
+            switch_page_button("app_pages/intro.py", text='Vorige stap: Introductie')
+        with col2:
+            switch_page_button("app_pages/audio_playback.py", text='Volgende stap: Playback Audio', button_type='primary')
+
+#%%
 def set_order_recordings():
     if len(st.session_state['audio_recording']) > 0:
         with st.container(border=True):
@@ -76,7 +93,7 @@ def set_order_recordings():
             user_button_process = st.button('Volgende stap: combineer de audio bestanden.')
         return user_button_process
 
-
+#%%
 def process_audio_recordings(user_button_process, bitrate='24k'):
     output_file = None
 
@@ -91,7 +108,7 @@ def process_audio_recordings(user_button_process, bitrate='24k'):
             # Get the correct order
             wav_audio = st.session_state['audio_recording'].get(filename)
             # Create filepath
-            filepath = os.path.join(st.session_state['temp_dir'], f'audio_{i}{ext}')
+            filepath = os.path.join(st.session_state['project_path'], f'audio_{i}{ext}')
             # Write audio to temp directory
             filepath = write_recording_to_disk(filepath, wav_audio, convert_to_m4a=True, bitrate=st.session_state['bitrate'])
             # Compress audio
@@ -100,7 +117,7 @@ def process_audio_recordings(user_button_process, bitrate='24k'):
             file_list.append(filepath_c)
 
         # Combine the audio files
-        output_file = combine_audio_files(file_list, st.session_state['temp_dir'], bitrate, '.m4a')
+        output_file = combine_audio_files(file_list, st.session_state['project_path'], bitrate, '.m4a')
 
     # Return
     return output_file
@@ -118,12 +135,12 @@ def add_audio_from_path():
             # Create text input
             user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
             add_button = st.button('Add audio file')
-    
+
             # Start conversio and compression
             if add_button and user_filepath != '' and os.path.isfile(user_filepath):
                 with st.spinner('In progress.. Be patient and do not press anything..'):
                     # Convert to m4a
-                    m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['temp_dir'], bitrate=st.session_state['bitrate'], overwrite=True)
+                    m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['project_path'], bitrate=st.session_state['bitrate'], overwrite=True)
                     st.write(m4a_filepath)
                     # Read m4a file
                     # with open(m4a_filepath, 'rb') as file:

@@ -7,57 +7,114 @@ interface to navigate back if no transcript is available.
 """
 
 from io import BytesIO
-
 import streamlit as st
 from markdown_pdf import MarkdownPdf, Section
 from openai import OpenAI
-import requests
-import json
+from nota_bene.utils import switch_page_button, save_session
 
-from nota_bene.utils import switch_page_button
+#%% Create header
+@st.fragment
+def run_main():
+    if st.session_state['project_name']:
+        st.header('Create Minutes For ' + st.session_state['project_name'], divider=True)
 
-st.subheader('Create minutes.')
+    if st.session_state['transcript']:
+        # switch_page_button("app_pages/transcribe.py", text="The Transcripts are a must to create minute notes.")
 
-user_select = st.selectbox(label='Select model', options=["llama3.2:latest", "openhermes-2.5-mistral-7b", "OpenAI"], index=0)
-if user_select != 'OpenAI':
-    user_select_endpoint = st.selectbox(label='Select model', options=st.session_state['endpoints'], index=0, label_visibility='collapsed')
-    if st.session_state['endpoint'] is None or user_select_endpoint != st.session_state['endpoint']:
-        st.session_state['endpoint'] = user_select_endpoint
-        st.info(f'Endpoint is updated to {st.session_state["endpoint"]}')
+        with st.container(border=True):
+            col1, col2 = st.columns(2)
 
-user_press = st.button("Maak notulen.")
+            # Selectionbox
+            col1.caption('Select LLModel')
+            options = st.session_state['model_names']
+            user_model = col1.selectbox(label='Select model', options=options, index=options.index(st.session_state['model']), label_visibility='collapsed')
+            if user_model != st.session_state['model']:
+                st.session_state['model'] = user_model
+                st.rerun()
 
-if not st.session_state["transcript"]:
-    switch_page_button("app_pages/transcribe.py", text="Er is nog geen transcript.")
-elif user_press and user_select == 'OpenAI':
-    client = OpenAI(api_key=st.session_state.openai_api_key)
-    response = client.chat.completions.create(
-        model=st.session_state.model,
-        temperature=0,
-        messages=[
-            {
-                "role": "system",
-                "content": st.session_state.prompt,
-            },
-            {"role": "user", "content": st.session_state.transcript},
-        ],
-        stream=True,
-    )
-    with st.container(height=400):
-        st.session_state["minutes"] = st.write_stream(response)
-        st.rerun()
+            # Button
+            col2.caption('Create Minute Notes')
+            user_press = col2.button(f"Run LLM!", type='primary', use_container_width=True)
 
-elif user_press and user_select != 'OpenAI':
+            # Run LLM
+            if user_press and st.session_state['model'] == 'gpt-4o-mini':
+                run_openai()
+            elif user_press:
+                run_local_llm()
+
+    # Show minutes
+    show_minutes()
+    # Show Back-Download button
+    navigation()
+
+
+# %%
+@st.fragment
+def show_minutes():
+    st.session_state.setdefault("edit_mode_minutes", False)
+
+    with st.container(border=True):
+        if not st.session_state.get("minutes"):
+            st.info("Nog geen notulen beschikbaar.")
+            return
+
+        if st.session_state["edit_mode_minutes"]:
+            # Editable mode
+            updated_minutes = st.text_area(
+                label="Edit Minutes",
+                value=st.session_state["minutes"],
+                height=1000,
+                label_visibility="collapsed",
+                key="minutes_editor"
+            )
+            col1, col2 = st.columns([0.2, 0.8])
+            with col1:
+                if st.button("💾 Save Minutes"):
+                    st.session_state["minutes"] = updated_minutes
+                    st.session_state["edit_mode_minutes"] = False
+                    st.success("Notulen zijn bijgewerkt.")
+                    st.rerun()
+            with col2:
+                if st.button("❌ Cancel"):
+                    st.session_state["edit_mode_minutes"] = False
+                    st.rerun()
+        else:
+            # View mode
+            st.markdown(st.session_state["minutes"])
+            if st.button("✏️ Edit Minutes"):
+                st.session_state["edit_mode_minutes"] = True
+                st.rerun()
+
+# %%
+def navigation():
+    with st.container(border=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            switch_page_button("app_pages/model_instructions.py", text='Previous stap: Set Model Instructions')
+
+        with col2:
+            if st.session_state["minutes"]:
+                st.download_button("Download notulen (.md)", file_name="notulen.md", data=st.session_state["minutes"], type='primary')
+        with col3:
+            if st.session_state["minutes"]:
+                pdf = MarkdownPdf(toc_level=2)
+                f = BytesIO()
+                pdf.add_section(Section(st.session_state["minutes"]))
+                pdf.save(f)
+                st.download_button("Download notulen (.pdf)", file_name="notulen.pdf", data=f, type='primary')
+
+# %%
+def run_local_llm():
     from nota_bene.utils import API_LLM
-
+    
     # Get prompts
     system_prompt = st.session_state['prompt']
     prompt = st.session_state['transcript']
-
+    
     # Initialize
-    model = API_LLM(model_id=user_select, api_url=st.session_state['endpoint'], temperature=0.7)
+    model = API_LLM(model_id=st.session_state['model'], api_url=st.session_state['endpoint'], temperature=0.7)
     response = model.run(f"{system_prompt}\n\n{prompt}")
-
+    
     # system_prompt = "You are an AI assistant"
     # prompt = "hi"
     # payload = {
@@ -66,36 +123,35 @@ elif user_press and user_select != 'OpenAI':
     #     "prompt": prompt,
     #     "stream": False
     #     }
-
+    
     # response = requests.post('http://localhost:11434/api/generate', json=payload)
-
+    
     # # st.write(response.text)
     # # print(response.text)
     # response = json.loads(response.text)
     # response = response['response']
+    
+    st.session_state["minutes"] = response
+    save_session()
 
-    with st.container(height=400):
-        st.session_state["minutes"] = response
-        st.rerun()
-
-
-if st.session_state["minutes"]:
-    if st.button('Edit minutes'):
-        minutes_update = st.text_area(label='minutes', value=st.session_state["minutes"], height=1000, label_visibility='collapsed')
-        if st.session_state["minutes"] != minutes_update:
-            st.session_state["minutes"] = minutes_update
-            st.info('Notules zijn bijgewerkt.')
-
-    with st.container(border=False):
-        st.markdown(st.session_state["minutes"])
-
-    st.download_button(
-        "Download notulen (.md)",
-        file_name="notulen.md",
-        data=st.session_state["minutes"],
+# %%
+def run_openai():
+    client = OpenAI(api_key=st.session_state['openai_api_key'])
+    response = client.chat.completions.create(
+        model=st.session_state['model'],
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": st.session_state['prompt'],
+            },
+            {"role": "user", "content": st.session_state['transcript']},
+        ],
+        stream=True,
     )
-    pdf = MarkdownPdf(toc_level=2)
-    f = BytesIO()
-    pdf.add_section(Section(st.session_state["minutes"]))
-    pdf.save(f)
-    st.download_button("Download notulen (.pdf)", file_name="notulen.pdf", data=f)
+
+    st.session_state["minutes"] = st.write_stream(response)
+    save_session()
+
+# %%
+run_main()

@@ -9,50 +9,24 @@ full prompt template used in generating structured meeting minutes.
 from io import BytesIO
 import os
 import subprocess
+import json
 from pathlib import Path
+import logging
+import pypickle
+import nota_bene.prompts as prompts
+
 try:
     import whisper
 except:
-    print('pip install openai-whisper')
+    logging.info('pip install openai-whisper')
 
 import streamlit as st
 from openai import OpenAI
 import tempfile
 
-FULL_PROMPT = """Je bent een AI-assistent gespecialiseerd in het omzetten van
-transcripties naar gestructureerde en overzichtelijke notulen. Jouw taak is om van een
-transcriptie een professioneel verslag te maken, zelfs als de transcriptie afkomstig is
-van automatische spraak-naar-tekst software en fouten kan bevatten.
+#%%
 
-Bij het verwerken van de transcriptie, houd je rekening met het volgende:
-1. **Corrigeren van fouten:** Je corrigeert duidelijke fouten in de transcriptie (zoals
-verkeerde woorden, grammaticale fouten en onduidelijke zinnen) op basis van de context.
-Als iets onzeker blijft, markeer je dit met '[?]'.
-2. **Heldere structuur:** Je formatteert de notulen volgens de volgende opbouw:
-   - **Titel en datum van de bijeenkomst** (haal dit uit de context van de
-   transcriptie, indien mogelijk, anders laat het leeg).
-   - **Aanwezigen en afwezigen** (indien vermeld).
-   - **Samenvatting:** Een beknopte samenvatting van de belangrijkste besproken
-   onderwerpen en uitkomsten.
-   - **Details per agendapunt:** Geef de belangrijkste punten en discussies weer per
-   onderwerp.
-   - **Actiepunten en besluiten:** Noteer actiepunten en besluiten genummerd en
-   duidelijk geordend.
-3. **Samenvatten en structureren:** Behoud de kern van de informatie, verwijder
-irrelevante details en vermijd herhaling. Gebruik bondige, professionele taal.
-4. **Neutraliteit:** Schrijf in een objectieve, neutrale toon en geef geen subjectieve
-interpretaties.
-5. **Tijdsaanduidingen:** Voeg waar nodig tijdsaanduidingen toe om de volgorde van de
-bespreking te verduidelijken. Laat irrelevante tijdsaanduidingen weg.
-
-Je ontvangt een transcriptie van de gebruiker als input. Zet deze direct om in volledig
-gestructureerde en gepolijste notulen volgens de bovenstaande richtlijnen.
-
-Wanneer je klaar bent, geef je alleen het uiteindelijke verslag als output, zonder
-verdere uitleg.
-
-"""
-def switch_page_button(page: st.Page, text: str | None = None):
+def switch_page_button(page: st.Page, text: str | None = None, button_type: str = 'secondary'):
     """
     Generate a button in the Streamlit app to switch to another page.
 
@@ -63,7 +37,7 @@ def switch_page_button(page: st.Page, text: str | None = None):
     text : str or None, optional
         The label displayed on the button. If None, defaults to "Volgende".
     """
-    if st.button(text or "Volgende"):
+    if st.button(text or "Volgende", type=button_type):
         st.switch_page(page)
 
 @st.cache_data(persist=True)
@@ -108,7 +82,7 @@ def transcribe_audio_streamlit_object(audio_file: BytesIO) -> str:
     return transcription.text
 
 
-def init_session_key(key: str, default_value: str | None = None):
+def init_session_key(key: str, default_value: str | None = None, overwrite: bool = True):
     """
     Initialize a session state key with an optional default value.
 
@@ -119,29 +93,40 @@ def init_session_key(key: str, default_value: str | None = None):
     default_value : str or None, optional
         The default value for the key if it doesn't exist yet.
     """
-    if key not in st.session_state:
+    if (key not in st.session_state) or overwrite:
         st.session_state[key] = default_value
 
-def init_session_keys():
+def init_session_keys(overwrite=False):
     """Initialize multiple session state keys with default values."""
-    # temp_dir = os.path.join(tempfile.gettempdir(), "notabena")
-    temp_dir = tempfile.TemporaryDirectory().name + "_notabena"
+    temp_dir = os.path.join(tempfile.gettempdir(), "notabena")
+    # temp_dir = tempfile.TemporaryDirectory().name + "_notabena"
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
-    init_session_key("audio")
-    init_session_key("transcript")
-    init_session_key("model", default_value="gpt-4o-mini")
-    init_session_key("prompt", default_value=FULL_PROMPT)
-    init_session_key("openai_api_key", default_value=st.secrets["openai"]["key"])
-    init_session_key("minutes")
-    init_session_key("temp_dir", default_value=temp_dir)
-    init_session_key("audio_filepath", default_value=None)
-    init_session_key("endpoints", default_value=['http://localhost:1234/v1/chat/completions', 'http://localhost:11434/api/generate'])
-    init_session_key("endpoint", default_value=None)
-    init_session_key("audio_recording", default_value={})
-    init_session_key("audio_order", default_value=[])
-    init_session_key("bitrate", default_value='24k')
+    init_session_key("openai_api_key", default_value=st.secrets["openai"]["key"], overwrite=False)
+    init_session_key("endpoints", default_value=['http://localhost:1234/v1/chat/completions', 'http://localhost:11434/api/generate'], overwrite=False)
+    # Take the first endpoint as default
+    init_session_key("endpoint", default_value=st.session_state['endpoints'][0], overwrite=False)
+    init_session_key("temp_dir", default_value=temp_dir, overwrite=False)
+    init_session_key("model", default_value="gpt-4o-mini", overwrite=False)
+    init_session_key("model_names", default_value=["llama3.2:latest", "openhermes-2.5-mistral-7b", "gpt-4o-mini"], overwrite=False)
+    init_session_key("model_type", default_value='turbo', overwrite=False)
+    init_session_key("prompt", default_value=prompts.minute_notes()['Minute Notes'], overwrite=False)
+    init_session_key("save_path", default_value=None, overwrite=False)
+
+    if 'instructions' not in st.session_state:
+        st.session_state['instructions'] = {**prompts.minute_notes(), **prompts.heisessie()}
+
+    init_session_key("project_name", default_value='', overwrite=overwrite)
+    init_session_key("project_path", default_value='', overwrite=overwrite)
+    init_session_key("audio_filepath", default_value=None, overwrite=overwrite)
+    init_session_key("audio", default_value=None, overwrite=overwrite)
+    init_session_key("transcript", overwrite=overwrite)
+    init_session_key("minutes", overwrite=overwrite)
+    init_session_key("audio_recording", default_value={}, overwrite=overwrite)
+    init_session_key("audio_order", default_value=[], overwrite=overwrite)
+    init_session_key("bitrate", default_value='24k', overwrite=overwrite)
+    init_session_key("timings", default_value=[], overwrite=overwrite)
 
 
 def write_audio_to_disk(audio, filepath):
@@ -234,12 +219,21 @@ def combine_audio_files(audio_files, temp_dir, bitrate, ext='.m4a'):
 def compress_audio(file_path, bitrate='16k'):
     #  https://github.com/openai/whisper/discussions/870
     if file_path is not None:
+        # Check bitrate
+        logging.info('Checking bitrate..')
+        bitrate_int = bitrate_to_kbps(bitrate)
+        curr_bitrate = get_bitrate(file_path)
+        if (curr_bitrate-1000) <= curr_bitrate and (curr_bitrate+1000) >= curr_bitrate:
+            logging.info(f'Current audio file has bitrate within user defined range: {curr_bitrate} <return>')
+            return file_path
+
         # Command to compress the audio using FFmpeg
         filename_new = os.path.split(file_path)[1].split('.')[0] + '_compressed_' + f'{bitrate}' + '.' + os.path.split(file_path)[1].split('.')[1]
         output_file = os.path.join(os.path.split(file_path)[0], filename_new)
 
+        print(f'Start compression audio to {bitrate}..')
         if not os.path.isfile(output_file):
-            with st.spinner("Wait for it... compressing audio.."):
+            with st.spinner(f"Wait for it... compressing audio.. from {curr_bitrate} to {bitrate_int}"):
                 command = [
                     'ffmpeg',
                     '-i', file_path,  # Input file
@@ -253,6 +247,34 @@ def compress_audio(file_path, bitrate='16k'):
                 # st.write(output_file)
                 # st.write(os.path.getsize(output_file))
         return output_file
+
+
+def get_bitrate(file_path):
+    """
+    Checks if the audio file has a bitrate higher than the target.
+
+    Args:
+        file_path (str): Path to the audio file.
+
+    Returns:
+        int: bitrate
+    """
+    try:
+        command = [
+            'ffprobe', '-v', 'error',
+            '-select_streams', 'a:0',
+            '-show_entries', 'stream=bit_rate',
+            '-of', 'json',
+            file_path
+        ]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        info = json.loads(result.stdout)
+        current_bitrate = int(info['streams'][0]['bit_rate'])
+
+        return current_bitrate
+    except Exception as e:
+        print(f"Error checking bitrate: {e}")
+        return None  # Assume compression is required if we can't determine bitrate
 
 
 def convert_wav_to_m4a(wav_filepath, output_directory=None, bitrate='128k', overwrite=False):
@@ -307,6 +329,12 @@ def convert_wav_to_m4a(wav_filepath, output_directory=None, bitrate='128k', over
 
     return m4a_filepath
 
+def bitrate_to_kbps(bitrate_str):
+    """Convert bitrate like '16k' to integer in bits per second."""
+    if bitrate_str.lower().endswith('k'):
+        return int(bitrate_str[:-1]) * 1000
+    return int(bitrate_str)
+
 
 #%% Define API-based Agent
 class API_LLM:
@@ -346,3 +374,27 @@ class API_LLM:
         else:
             return f"Error: {response.status_code} - {response.text}"
 
+#%%
+def list_subdirectories(dirname):
+    if not dirname or not os.path.exists(dirname):
+        return []
+
+    subdirs = [name for name in os.listdir(dirname)
+               if os.path.isdir(os.path.join(dirname, name))]
+    return subdirs
+
+def set_project_paths(project_name):
+    st.session_state["project_name"] = project_name
+    st.session_state["project_path"] = os.path.join(st.session_state['temp_dir'], '' if project_name is None else project_name)
+    st.session_state["save_path"] = os.path.join(st.session_state['project_path'], 'session_states.pkl')
+    if not os.path.exists(st.session_state["project_path"]):
+        os.makedirs(st.session_state["project_path"])
+
+def save_session(save_audio=True):
+    if save_audio:
+        filtered_states = {k: v for k, v in st.session_state.items() if k != 'demo'}
+        pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
+    else:
+        filtered_states = {k: v for k, v in st.session_state.items() if k != 'audio'}
+        pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
+    st.info('Session Saved.')

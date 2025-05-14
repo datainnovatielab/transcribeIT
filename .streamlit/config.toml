@@ -1,5 +1,14 @@
 [browser]
-
 # Whether to send usage statistics to Streamlit.
 # Default: true
 gatherUsageStats = false
+
+[server]
+runOnSave = false # torch warning
+
+[theme]
+primaryColor = "#2563EB"        # Indigo-600: buttons, sliders, etc.
+backgroundColor = "#F9FAFB"     # Light Gray: app background
+textColor = "#111827"           # Almost-black: body text
+font = "sans serif"             # Other options: serif, monospace
+secondaryBackgroundColor = "#E5E7EB"  # Gray-200 (sidebar + widgets)
