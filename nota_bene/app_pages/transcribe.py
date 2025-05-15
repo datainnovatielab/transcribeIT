@@ -72,6 +72,8 @@ def run_transcription():
     # Button
     col2.caption('Transcribe Audio file using the selected model')
     user_press = col2.button(f"Run Transcription!", type='primary')
+    # Checkbox
+    load_transcript_userselect = st.checkbox('Load processed audio transcripts.', value=True, help='Load previously transcribed transcriptions during run.')
 
     # Change model
     if model_type != st.session_state['model_type']:
@@ -99,7 +101,12 @@ def run_transcription():
         # 1. Cut the audio file in chunks of 30minutes
         # 2. Transcribe per chunk
         # 3. Stack all text together
-        st.warning("Transcription is running now. Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
+        if load_transcript_userselect and st.session_state['transcript']:
+            st.info("Transcription is loaded..")
+            return
+        else:
+            st.warning("Transcription is running now. Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
+
         status_placeholder = st.empty()
         status_placeholder2 = st.empty()
 
@@ -125,7 +132,7 @@ def run_transcription():
             chunk_path = os.path.join(st.session_state['project_path'], chunk_filename)
 
             # Load transcript from textfile or run model
-            if os.path.exists(chunk_path):
+            if os.path.exists(chunk_path) and load_transcript_userselect:
                 # Load cached transcript
                 with open(chunk_path, "r", encoding="utf-8") as f:
                     cached_data = json.load(f)
