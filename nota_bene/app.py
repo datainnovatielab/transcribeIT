@@ -93,18 +93,19 @@ def sidebar():
         enter_project_name()
         init_session_keys(overwrite=True)
 
-    st.sidebar.divider()
 
-    if st.sidebar.button("OpenAI-key invoeren"):
-        enter_api_key()
-
-    if st.session_state["openai_api_key"]:
-        st.sidebar.write("✅ Je hebt een API-key ingevoerd")
-    else:
-        st.sidebar.write("❌ Je hebt nog geen API-key ingevoerd")
-
-    st.sidebar.divider()
     st.sidebar.caption(f"{st.session_state['project_path']}")
+    st.sidebar.divider()
+
+    # if st.sidebar.button("OpenAI-key invoeren"):
+    #     enter_api_key()
+    # if st.session_state['model'] == 'gpt-4o-mini':
+    #     if st.session_state["openai_api_key"]:
+    #         st.sidebar.write("✅ Je hebt een API-key ingevoerd")
+    #     else:
+    #         st.sidebar.write("❌ Je hebt nog geen API-key ingevoerd")
+
+    # st.sidebar.divider()
 
     cols = st.sidebar.columns([0.5, 0.5])
     if st.session_state['project_name'] is not None and st.session_state['project_name'] != '':

@@ -13,6 +13,14 @@ from openai import OpenAI
 from nota_bene.utils import switch_page_button, save_session
 
 #%% Create header
+@st.dialog("Key?")
+def enter_api_key():
+    """Enter OpenAI key in dialog window."""
+    api_key = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"] or "", type="password")
+    if st.button("Bevestigen"):
+        st.session_state["openai_api_key"] = api_key
+        st.rerun()
+
 @st.fragment
 def run_main():
     if st.session_state['project_name']:
@@ -35,6 +43,16 @@ def run_main():
             # Button
             col2.caption('Create Minute Notes')
             user_press = col2.button(f"Run LLM!", type='primary', use_container_width=True)
+
+            # Show key
+            if st.session_state['model'] == 'gpt-4o-mini':
+                if col1.button("OpenAI-key invoeren", use_container_width=True):
+                    enter_api_key()
+                if st.session_state['model'] == 'gpt-4o-mini':
+                    if st.session_state["openai_api_key"]:
+                        col2.write("✅ Je hebt een API-key ingevoerd")
+                    else:
+                        col2.write("❌ Je hebt nog geen API-key ingevoerd")
 
             # Run LLM
             if user_press and st.session_state['model'] == 'gpt-4o-mini':
