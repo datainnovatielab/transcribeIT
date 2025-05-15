@@ -9,6 +9,7 @@ import shutil
 import pypickle
 
 init_session_keys()
+# https://streamlit-emoji-shortcodes-streamlit-app-gwckff.streamlit.app/
 
 # %%
 def main():
@@ -24,7 +25,7 @@ def main():
 
     pg = st.navigation(
         {
-            "Main": [st.Page("app_pages/intro.py", title="Introductie")],
+            "Main": [st.Page("app_pages/intro.py", title="📢 Introductie")],
             "Audio": [
                 st.Page("app_pages/audio_recording.py", title=("✅ " if st.session_state.get('audio') else "") + "Record Audio"),
                 st.Page("app_pages/audio_upload.py", title=("✅ " if st.session_state.get('audio_filepath') else "") + "Upload Recordings"),
@@ -38,21 +39,22 @@ def main():
 
             ],
             "Configurations": [
-                st.Page("app_pages/configurations.py", title="Configurations"),
+                st.Page("app_pages/configurations.py", title="⚙️ Configurations"),
                 ]
         }
     )
 
     pg.run()
 
+#%%
 def sidebar():
-    @st.dialog("Key?")
-    def enter_api_key():
-        """Enter OpenAI key in dialog window."""
-        api_key = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"] or "", type="password")
-        if st.button("Bevestigen"):
-            st.session_state["openai_api_key"] = api_key
-            st.rerun()
+    # @st.dialog("Key?")
+    # def enter_api_key():
+    #     """Enter OpenAI key in dialog window."""
+    #     api_key = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"] or "", type="password")
+    #     if st.button("Bevestigen"):
+    #         st.session_state["openai_api_key"] = api_key
+    #         st.rerun()
 
     @st.dialog("New Project Name")
     def enter_project_name():
