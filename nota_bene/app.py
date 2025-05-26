@@ -27,15 +27,17 @@ def main():
         {
             "Main": [st.Page("app_pages/intro.py", title="📢 Introductie")],
             "Audio": [
-                st.Page("app_pages/audio_recording.py", title=("✅ " if st.session_state.get('audio') else "") + "Record Audio"),
-                st.Page("app_pages/audio_upload.py", title=("✅ " if st.session_state.get('audio_filepath') else "") + "Upload Recordings"),
-                st.Page("app_pages/audio_playback.py", title=("✅ " if st.session_state.get('audio') else "") + "Playback Recordings"),
-                st.Page("app_pages/transcribe.py", title=("✅ " if st.session_state.get('transcript') else "") + "Run Transcription"),
-                st.Page("app_pages/transcribe_edit.py", title=("✅ " if st.session_state.get('transcript') else "") + "Edit Transcription"),
+                st.Page("app_pages/audio_recording.py", title=("✅ " if st.session_state.get('audio') else "❗") + "Record Audio"),
+                st.Page("app_pages/audio_upload.py", title=("✅ " if st.session_state.get('audio_filepath') else "❗") + "Upload Recordings"),
+                st.Page("app_pages/audio_playback.py", title=("✅ " if st.session_state.get('audio') else "❗") + "Playback Recordings"),
+            ],
+            "Transcription": [
+                st.Page("app_pages/transcribe.py", title=("✅ " if st.session_state.get('transcript') else "❗") + "Run Transcription"),
+                st.Page("app_pages/transcribe_edit.py", title=("✅ " if st.session_state.get('transcript') else "❗") + "Edit Transcription"),
             ],
             "Notuleren": [
-                st.Page("app_pages/model_instructions.py", title=("✅ " if st.session_state.get('prompt') else "") + "Model Instruction"),
-                st.Page("app_pages/create_minutes.py", title=("✅ " if st.session_state.get('minutes') else "") + "Create Minute Notes"),
+                st.Page("app_pages/model_instructions.py", title=("✅ " if st.session_state.get('prompt') else "❗") + "Model Instruction"),
+                st.Page("app_pages/create_minutes.py", title=("✅ " if st.session_state.get('minutes') else "❗") + "Create Minute Notes"),
 
             ],
             "Configurations": [
@@ -71,8 +73,8 @@ def sidebar():
     # Selectbox
     col1.caption('Load Project')
     options = list_subdirectories(st.session_state['temp_dir'])
-    index = options.index(st.session_state["project_name"]) if st.session_state["project_name"] in options else 0
-    project_name = col1.selectbox("Select a Project", options = options, index=index, label_visibility='collapsed', help='Select project')
+    index = options.index(st.session_state["project_name"]) if st.session_state["project_name"]!='' in options else None
+    project_name = col1.selectbox("Select a Project", options=options, index=index, label_visibility='collapsed', help='Select project')
 
     # If a different project is choosen, load the session parameters
     if project_name != st.session_state["project_name"]:
