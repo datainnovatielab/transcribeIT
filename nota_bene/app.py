@@ -71,7 +71,7 @@ def sidebar():
     # Display in listbox if available
     col1, col2 = st.sidebar.columns([0.5, 0.5])
     # Selectbox
-    col1.caption('Load Project')
+    col1.caption('Select to Load Project')
     options = list_subdirectories(st.session_state['temp_dir'])
     index = options.index(st.session_state["project_name"]) if st.session_state["project_name"]!='' in options else None
     project_name = col1.selectbox("Select a Project", options=options, index=index, label_visibility='collapsed', help='Select project')
@@ -90,8 +90,8 @@ def sidebar():
         st.rerun()
 
     # col1, col2 = st.sidebar.columns([0.5, 0.5])
-    col2.caption('Create New Project')
-    if col2.button("Create New Project", use_container_width=True):
+    col2.caption('Start New Project')
+    if col2.button("Start New Project", use_container_width=True):
         enter_project_name()
         init_session_keys(overwrite=True)
 
