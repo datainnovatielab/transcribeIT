@@ -6,6 +6,8 @@ import os
 import shutil
 import numpy as np
 from nota_bene.utils import write_audio_to_disk, file_to_bytesio, combine_audio_files, compress_audio, save_session
+from nota_bene.utils import convert_wav_to_m4a
+from datetime import datetime
 
 
 # %%
@@ -29,12 +31,12 @@ def run_main():
             return
 
     with st.container(border=True):
-        st.subheader('Upload Audio Files')
-        st.caption('Upload audio files and set the order.')
+        add_audio_from_path()
+    #     st.caption('Upload audio files and set the order.')
 
     with st.container(border=True):
         # File uploader with support for .m4a files
-        uploaded_files = st.file_uploader("Upload Audio Files", type=["mp3", "wav", "m4a"], accept_multiple_files=True)
+        uploaded_files = st.file_uploader("Drag and Drop Audio Files", type=["mp3", "wav", "m4a"], accept_multiple_files=True)
         # Upload and process audio
         audio_processing(uploaded_files, st.session_state['project_path'], bitrate=st.session_state['bitrate'])
 
@@ -46,6 +48,33 @@ def run_main():
         with col2:
             switch_page_button("app_pages/audio_playback.py", text='Next Step: Playback Audio', button_type='primary')
 
+
+#%%
+def add_audio_from_path():
+    """
+    Convert wav file to m4a.
+
+    """
+    with st.container(border=False):
+        st.caption('Upload Multiple Audio Files By Pathname.')
+        # Create text input
+        user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
+        add_button = st.button('Add Audio File From Path')
+
+        # Start conversio and compression
+        if add_button and user_filepath != '' and os.path.isfile(user_filepath):
+            with st.spinner('In progress.. Be patient and do not press anything..'):
+                # Convert to m4a
+                m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['project_path'], bitrate=st.session_state['bitrate'], overwrite=True)
+                st.write(m4a_filepath)
+                # Read m4a file
+                # with open(m4a_filepath, 'rb') as file:
+                #     audiobyes = file.read()
+                audiobyes = file_to_bytesio(m4a_filepath)
+                # Store in session
+                audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.session_state['audio_recording'][audioname] = audiobyes
+                st.session_state['audio_order'].append(audioname)
 
 # %% Combine the audio files into one
 def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
