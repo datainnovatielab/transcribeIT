@@ -99,7 +99,7 @@ def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
                 st.session_state['audio'] = file_to_bytesio(st.session_state['audio_filepath'])
                 # Save
                 my_bar.progress(95, text=f'Saving session states..')
-                save_session(audio=True)
+                save_session(save_audio=True)
                 my_bar.progress(100, text=f'Done!')
 
 
