@@ -24,7 +24,7 @@ def main():
     if 'audio_order' not in st.session_state:
         st.session_state['audio_order'] = []
 
-    with st.expander('Record audio'):
+    with st.container(border=True):
         st.caption('Use the buttons for navigation. Note that recordings from laptops usually ends up in poor audio quality, hence poor transcription results. An external microphone is then recommended.')
         # Audio panel
         wav_audio_data = st_audiorec()
@@ -40,7 +40,7 @@ def main():
             # st.info(f"Audio fragment number {len(st.session_state['audio_recording'].keys())-1} audio fragment(s) is saved.")
 
     # Add by pathname
-    add_audio_from_path()
+    # add_audio_from_path()
     # Set the order of the recordings
     user_button_process = set_order_recordings()
 
@@ -121,35 +121,6 @@ def process_audio_recordings(user_button_process, bitrate='24k'):
 
     # Return
     return output_file
-
-
-#%%
-def add_audio_from_path():
-    """
-    Convert wav file to m4a.
-
-    """
-    with st.expander('Add audio files directly from path'):
-        with st.container(border=False):
-            st.caption('Add audio file by using the pathname.')
-            # Create text input
-            user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
-            add_button = st.button('Add audio file')
-
-            # Start conversio and compression
-            if add_button and user_filepath != '' and os.path.isfile(user_filepath):
-                with st.spinner('In progress.. Be patient and do not press anything..'):
-                    # Convert to m4a
-                    m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['project_path'], bitrate=st.session_state['bitrate'], overwrite=True)
-                    st.write(m4a_filepath)
-                    # Read m4a file
-                    # with open(m4a_filepath, 'rb') as file:
-                    #     audiobyes = file.read()
-                    audiobyes = file_to_bytesio(m4a_filepath)
-                    # Store in session
-                    audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    st.session_state['audio_recording'][audioname] = audiobyes
-                    st.session_state['audio_order'].append(audioname)
 
 
 # %%

@@ -23,8 +23,7 @@ def run_main():
         if st.session_state['audio']:
             st.subheader('Final Audio File')
         else:
-            st.subheader('No Audio File')
-        # st.write("Je hebt dit audiobestand geüpload:")
+            st.warning('Audio file not found')
         st.caption("This is the final combined audio file.")
         st.audio(st.session_state['audio'])
 

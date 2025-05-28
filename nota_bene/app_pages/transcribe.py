@@ -5,6 +5,7 @@ import os
 import json
 import streamlit as st
 import numpy as np
+from datetime import datetime, timedelta
 
 try:
     import whisper
@@ -26,7 +27,8 @@ def run_main():
 
     with st.container(border=True):
         if st.session_state['audio'] is None:
-            st.markdown('Automatic transcription requires an audio file. There is no audio file here. Please go to the previous page to upload an audio file. Alternatively it is also possible to add your own transcripts in the next page.')
+            st.warning('Audio file not found!')
+            st.markdown('Automatic transcription requires an audio file. Please go to the previous page to upload an audio file. If you do **not** have an audio file, it is also possible to copy-paste **transcripts** in the next page.')
         else:
             # Run transcription
             run_status = run_transcription()
