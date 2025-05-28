@@ -46,6 +46,7 @@ def transcribe_local(audio_path, user_select):
     model = whisper.load_model(user_select).to("cpu")  # Explicitly set CPU
     # Create transcript
     transcript = model.transcribe(audio_path)
+    # Return
     return transcript
 
 
@@ -396,4 +397,4 @@ def save_session(save_audio=True):
     else:
         filtered_states = {k: v for k, v in st.session_state.items() if k != 'audio'}
         pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
-    st.info('Session Saved.')
+    st.success('✅ Completed and session is saved!')

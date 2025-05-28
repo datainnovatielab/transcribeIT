@@ -104,13 +104,17 @@ def run_transcription():
         # 2. Transcribe per chunk
         # 3. Stack all text together
         if load_transcript_userselect and st.session_state['transcript']:
-            st.info("Transcription is loaded..")
+            st.warning("Transcription is already performed and loaded. Uncheck to run again the transcription.")
             return
         else:
+            st.session_state['timings'] = []
+            st.session_state['transcript'] = None
             st.warning("Transcription is running now. Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
 
         status_placeholder = st.empty()
         status_placeholder2 = st.empty()
+        status_placeholder3 = st.empty()
+        status_placeholder4 = st.empty()
 
         # Create chunks of 300sec
         segment_time = 300
@@ -121,7 +125,9 @@ def run_transcription():
         envtype = 'OpenAI' if model_type.lower()=='openai' else 'local'
         # my_bar.progress(0, text=f'Working on the first audio chunk using Whisper-{model_type} model in the [{envtype}] environment.')
 
-        status_placeholder2.markdown(f"""Operation {st.session_state['project_name']} in progress. Working on the first audio chunk using Whisper-{model_type} model in the [{envtype}] environment.""")
+        status_placeholder2.markdown(f"""✅ Transcription of **{st.session_state['project_name']}** is initiated.""")
+        status_placeholder3.markdown(f"""✅ Running in **{envtype}** environment.""")
+        status_placeholder4.markdown(f"""✅ **Whisper-{model_type} model** is succesfully loaded.""")
 
         # Run over all audio fragments
         for i, audio_path in enumerate(audio_chunks):
@@ -170,10 +176,20 @@ def run_transcription():
             progress_percent = int((max(i + 1, 1) / len(audio_chunks)) * 100)
             avg_time = sum(timings) / len(timings)
             remaining_chunks = len(audio_chunks) - (i + 1)
-            estimated_time_left = round(avg_time * remaining_chunks, 1)
-            estimated_time_left = 'To be estimated' if estimated_time_left < 0.1 else str(estimated_time_left) + ' min'
+
+            # Format estimated time left
+            estimated_minutes = avg_time * remaining_chunks
+            estimated_time_left = 'To be estimated' if estimated_minutes < 0.1 else f"{round(estimated_minutes, 1)} min"
+            # Calculate estimated finish time
+            if estimated_minutes < 0.1:
+                formatted_completion_time = 'To be estimated'
+            else:
+                estimated_completion_time = datetime.now() + timedelta(minutes=estimated_minutes)
+                formatted_completion_time = estimated_completion_time.strftime("%Y-%m-%d %H:%M:%S")
 
             # Show detailed progress text
+            status_placeholder3 = st.empty()
+            status_placeholder4 = st.empty()
             status_placeholder2.markdown(f"""
             <div style="width: 100%; background-color: #E5E7EB; border-radius: 6px; margin-top: 1em;">
               <div style="width: {progress_percent}%; background-color: #3B82F6; height: 12px; border-radius: 6px;"></div>
@@ -181,6 +197,7 @@ def run_transcription():
             <p style="font-size: 0.9em; color: #6B7280;">Progress: {progress_percent:.1f}%</p>
             """, unsafe_allow_html=True)
 
+            # Show detailed status
             status_placeholder.markdown(
                 f"""
                 <div style="padding: 1em; border-radius: 8px; background-color: #F3F4F6; color: #111827;">
@@ -188,11 +205,25 @@ def run_transcription():
                     Model: <span style="color:#2563EB;"><code>Whisper-{model_type}</code></span> |
                     Environment: <span style="color:#10B981;"><code>{envtype}</code></span><br>
                     Avg chunk time: <strong>{avg_time:.1f} min</strong><br>
-                    Estimated time left: <strong>{estimated_time_left}</strong>
+                    Estimated time left: <strong>{estimated_time_left}</strong> | 
+                    <strong>{formatted_completion_time}</strong>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
+            # status_placeholder.markdown(
+            #     f"""
+            #     <div style="padding: 1em; border-radius: 8px; background-color: #F3F4F6; color: #111827;">
+            #         <strong>Chunk {i + 1} of {len(audio_chunks)}</strong><br>
+            #         Model: <span style="color:#2563EB;"><code>Whisper-{model_type}</code></span> |
+            #         Environment: <span style="color:#10B981;"><code>{envtype}</code></span><br>
+            #         Avg chunk time: <strong>{avg_time:.1f} min</strong><br>
+            #         Estimated time left: <strong>{estimated_time_left}</strong>
+            #     </div>
+            #     """,
+            #     unsafe_allow_html=True
+            # )
 
         # Timings
         if len(timings) > 0: st.session_state['timings'] = timings
