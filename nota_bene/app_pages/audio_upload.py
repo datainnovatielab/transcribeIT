@@ -83,33 +83,54 @@ def audio_ordering(uploaded_files, temp_dir):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
-    if uploaded_files:
+    if uploaded_files and not st.session_state['audio']:
+        st.write('Select audio files and set order accordingly:')
         file_order = st.multiselect(
-            label="Select the order of audio files to process",
+            label="Change the order of audio files",
             options=[file.name for file in uploaded_files],
-            default=[file.name for file in uploaded_files]
+            default=[file.name for file in uploaded_files],
+            label_visibility='collapsed',
         )
 
-    if uploaded_files and st.button('Volgende stap: Combineer de audio bestanden in deze volgorde.') and uploaded_files:
+    return file_order
+
+
+# %% Combine the audio files into one
+@st.fragment
+def audio_processing(uploaded_files, file_order, temp_dir, bitrate):
+    # Create button
+    button_combine_compress = st.button('Next Step: Process audio file(s)', type='primary')
+
+    if button_combine_compress and len(file_order)==0:
+        st.warning('No audio files are selected for processing.')
+    elif button_combine_compress and uploaded_files:
         progress_text = "Operation in progress. Please wait."
         my_bar = st.progress(0, text=progress_text)
 
         file_list = []
+        audio_names = []
         for i, filename in enumerate(uploaded_files):
             # progressbar
             progress_percent = int((max(i + 1, 1) / len(uploaded_files)) * 100)
             my_bar.progress(progress_percent, text=f'Processing {filename.name}')
-            # Get the correct order
-            idx = np.where(np.isin(file_order, filename.name))[0][0]
-            # Get file ext and file path
-            _, ext = os.path.splitext(filename.name)
-            filepath = os.path.join(temp_dir, f'audio_{i}{ext}')
-            # Write audio to temp directory
-            write_audio_to_disk(uploaded_files[idx], filepath)
-            # Compress audio
-            filepath_c = compress_audio(filepath, bitrate=bitrate)
-            # Add the file path to list
-            file_list.append(filepath_c)
+
+            if not np.isin(filename.name, file_order):
+                # st.warning(f'{filename.name} skipped')
+                continue
+            else:
+                # Get index
+                idx = file_order.index(filename.name)
+                # Get file ext and file path
+                _, ext = os.path.splitext(filename.name)
+                filepath = os.path.join(temp_dir, f'audio_{i}{ext}')
+
+                # Write audio to temp directory
+                write_audio_to_disk(uploaded_files[idx], filepath)
+                # Compress audio
+                filepath_c = compress_audio(filepath, bitrate=bitrate)
+                # Add the file path to list
+                file_list.append(filepath_c)
+                audio_names.append(filename.name)
 
         # Combine the audio files
         my_bar.progress(90, text=f'combining audio fragments.. Wait for it..')
@@ -121,11 +142,42 @@ def audio_ordering(uploaded_files, temp_dir):
             if st.session_state['audio_filepath']:
                 # Create bytesIO
                 st.session_state['audio'] = file_to_bytesio(st.session_state['audio_filepath'])
+                st.session_state['audio_names'] = audio_names
                 # Save
                 my_bar.progress(95, text=f'Saving session states..')
                 save_session(save_audio=True)
                 my_bar.progress(100, text=f'Done!')
+                st.rerun()
 
+
+#%%
+def add_audio_from_path():
+    """
+    Convert wav file to m4a.
+
+    """
+    with st.container(border=False):
+        st.caption('Upload Audio Files By Exact Pathname')
+        # Create text input
+        user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
+        add_button = st.button('Add Audio File From Path')
+
+        # Start conversio and compression
+        if add_button and user_filepath != '' and os.path.isfile(user_filepath):
+            with st.spinner('In progress.. Be patient and do not press anything..'):
+                # Convert to m4a
+                m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['project_path'], bitrate=st.session_state['bitrate'], overwrite=True)
+                st.write(m4a_filepath)
+                # Read m4a file
+                # with open(m4a_filepath, 'rb') as file:
+                #     audiobyes = file.read()
+                audiobyes = file_to_bytesio(m4a_filepath)
+                # Store in session
+                audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.session_state['audio_recording'][audioname] = audiobyes
+                st.session_state['audio_order'].append(audioname)
+        elif add_button and not os.path.isfile(user_filepath):
+            st.warning(f'Audio file does not exists: {user_filepath}')
 
 # %%
 run_main()
