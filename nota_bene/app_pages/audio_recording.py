@@ -14,7 +14,7 @@ def main():
 
     if st.session_state['project_name'] == '' or st.session_state['project_name'] is None:
         with st.container(border=True):
-            st.info('Each project starts with a name. Create your new project at the left sidepanel.')
+            st.warning('Create a project first and then select! See left panel sidepanel.')
             return
     else:
         st.header('Record Audio: ' + st.session_state['project_name'], divider=True)

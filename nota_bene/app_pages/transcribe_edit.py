@@ -23,7 +23,7 @@ def run_main():
         st.header(f"Transcribe Audio Files: {st.session_state['project_name']}", divider=True)
     else:
         with st.container(border=True):
-            st.info('Each project starts with a name. Create your new project at the left sidepanel.')
+            st.warning('Create a project first and then select! See left panel sidepanel.')
         return
 
     st.write("**Transcript:**")

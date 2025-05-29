@@ -25,7 +25,7 @@ def run_main():
 
     if st.session_state['project_name'] == '' or st.session_state['project_name'] is None:
         with st.container(border=True):
-            st.info('Each project starts with a name. Create your new project at the left sidepanel.')
+            st.warning('Create a project first and then select! See left panel sidepanel.')
             return
     else:
         st.header('Uploads Audio files: ' + st.session_state['project_name'], divider=True)
@@ -111,7 +111,7 @@ def audio_processing(uploaded_files, file_order, temp_dir, bitrate):
         audio_names = []
         for i, filename in enumerate(uploaded_files):
             # progressbar
-            progress_percent = int((max(i + 1, 1) / len(uploaded_files)) * 100)
+            progress_percent = int((max(i + 1, 1) / len(uploaded_files)) * 90)
             my_bar.progress(progress_percent, text=f'Processing {filename.name}')
 
             if not np.isin(filename.name, file_order):
