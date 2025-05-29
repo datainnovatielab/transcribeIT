@@ -109,7 +109,7 @@ def init_session_keys(overwrite=False):
     init_session_key("endpoint", default_value=st.session_state['endpoints'][0], overwrite=False)
     init_session_key("temp_dir", default_value=temp_dir, overwrite=False)
     init_session_key("model", default_value="gpt-4o-mini", overwrite=False)
-    init_session_key("model_names", default_value=["llama3.2:latest", "openhermes-2.5-mistral-7b", "gpt-4o-mini"], overwrite=False)
+    init_session_key("model_names", default_value=["gpt-4o-mini"], overwrite=False)
     init_session_key("model_type", default_value='turbo', overwrite=False)
     init_session_key("prompt", default_value=prompts.minute_notes()['Minute Notes'], overwrite=False)
     init_session_key("save_path", default_value=None, overwrite=False)
@@ -125,6 +125,7 @@ def init_session_keys(overwrite=False):
     init_session_key("minutes", overwrite=overwrite)
     init_session_key("audio_recording", default_value={}, overwrite=overwrite)
     init_session_key("audio_order", default_value=[], overwrite=overwrite)
+    init_session_key("audio_names", default_value=[], overwrite=overwrite)
     init_session_key("bitrate", default_value='24k', overwrite=overwrite)
     init_session_key("timings", default_value=[], overwrite=overwrite)
 
