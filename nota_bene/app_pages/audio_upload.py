@@ -23,22 +23,39 @@ def run_main():
 
     """
 
-    if st.session_state['project_name']:
-        st.header('Audio Uploads For ' + st.session_state['project_name'], divider=True)
-    else:
+    if st.session_state['project_name'] == '' or st.session_state['project_name'] is None:
         with st.container(border=True):
             st.info('Each project starts with a name. Create your new project at the left sidepanel.')
             return
+    else:
+        st.header('Uploads Audio files: ' + st.session_state['project_name'], divider=True)
 
     with st.container(border=True):
         add_audio_from_path()
-    #     st.caption('Upload audio files and set the order.')
+        # st.caption('Upload audio files and set the order.')
 
+    # File uploader with support for .m4a files
     with st.container(border=True):
-        # File uploader with support for .m4a files
         uploaded_files = st.file_uploader("Drag and Drop Audio Files", type=["mp3", "wav", "m4a"], accept_multiple_files=True)
-        # Upload and process audio
-        audio_processing(uploaded_files, st.session_state['project_path'], bitrate=st.session_state['bitrate'])
+
+    # Upload and process audio
+    with st.container(border=True):
+        file_order = audio_ordering(uploaded_files, st.session_state['project_path'])
+
+        if st.session_state['audio']:
+            st.multiselect(label='Processed audio files', options=st.session_state['audio_names'], default=st.session_state['audio_names'], disabled=True)
+            # st.write(st.session_state['audio_names'])
+            # cols = st.columns(len(st.session_state['audio_names']))
+            # for i, audio_name in enumerate(st.session_state['audio_names']):
+            #     cols[i].button(audio_name, disabled=True)
+
+            # st.write(st.session_state['audio_filepath'])
+            # st.write(st.session_state['audio_names'])
+            if st.button('Remove processed audio files'):
+                st.session_state['audio'] = None
+                st.session_state['audio_filepath'] = None
+                st.session_state['audio_names'] = []
+                st.rerun()
 
     # Show continue button
     with st.container(border=True):
@@ -46,39 +63,17 @@ def run_main():
         with col1:
             switch_page_button("app_pages/audio_recording.py", text='Previous Step: Audio Recording')
         with col2:
-            switch_page_button("app_pages/audio_playback.py", text='Next Step: Playback Audio', button_type='primary')
+            if not st.session_state['audio']:
+                audio_processing(uploaded_files, file_order, st.session_state['project_path'], st.session_state['bitrate'])
+            else:
+                switch_page_button("app_pages/audio_playback.py", text='Next Step: Playback Audio', button_type='primary')
 
 
-#%%
-def add_audio_from_path():
-    """
-    Convert wav file to m4a.
-
-    """
-    with st.container(border=False):
-        st.caption('Upload Multiple Audio Files By Pathname.')
-        # Create text input
-        user_filepath = st.text_input(label='conversion_and_compression', value='', label_visibility='collapsed').strip()
-        add_button = st.button('Add Audio File From Path')
-
-        # Start conversio and compression
-        if add_button and user_filepath != '' and os.path.isfile(user_filepath):
-            with st.spinner('In progress.. Be patient and do not press anything..'):
-                # Convert to m4a
-                m4a_filepath = convert_wav_to_m4a(user_filepath, output_directory=st.session_state['project_path'], bitrate=st.session_state['bitrate'], overwrite=True)
-                st.write(m4a_filepath)
-                # Read m4a file
-                # with open(m4a_filepath, 'rb') as file:
-                #     audiobyes = file.read()
-                audiobyes = file_to_bytesio(m4a_filepath)
-                # Store in session
-                audioname = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                st.session_state['audio_recording'][audioname] = audiobyes
-                st.session_state['audio_order'].append(audioname)
 
 # %% Combine the audio files into one
-def audio_processing(uploaded_files, temp_dir, bitrate='24k'):
-    output_file = None
+def audio_ordering(uploaded_files, temp_dir):
+
+    file_order = []
     # Ensure ffmpeg is installed and accessible
     if not shutil.which("ffmpeg"):
         st.error("ffmpeg is required but not found. Please install ffmpeg and ensure it's in your system PATH.")

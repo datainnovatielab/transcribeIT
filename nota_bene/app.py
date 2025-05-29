@@ -90,8 +90,8 @@ def sidebar():
         st.rerun()
 
     # col1, col2 = st.sidebar.columns([0.5, 0.5])
-    col2.caption('Start New Project')
-    if col2.button("Start New Project", use_container_width=True):
+    col2.caption('Create New Project')
+    if col2.button("Create New Project", use_container_width=True):
         enter_project_name()
         init_session_keys(overwrite=True)
 

@@ -12,12 +12,12 @@ def main():
     Record audio from microphone and return the audio data while optionally saving to disk.
     """
 
-    if st.session_state['project_name']:
-        st.header('Record Audio For ' + st.session_state['project_name'], divider=True)
-    else:
+    if st.session_state['project_name'] == '' or st.session_state['project_name'] is None:
         with st.container(border=True):
             st.info('Each project starts with a name. Create your new project at the left sidepanel.')
             return
+    else:
+        st.header('Record Audio: ' + st.session_state['project_name'], divider=True)
 
     if 'audio_recording' not in st.session_state:
         st.session_state['audio_recording'] = {}
