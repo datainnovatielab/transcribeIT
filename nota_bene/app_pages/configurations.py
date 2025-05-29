@@ -5,26 +5,34 @@ import time
 import numpy as np
 import copy
 import os
-from LLMlight import LLMlight
-from nota_bene.utils import set_project_paths
+from nota_bene.utils import set_project_paths, load_llm_model
 
 #%%
 def run_main():
-    # if st.session_state['project_name']:
     st.header('⚙️ Configurations', divider=True)
-    # else:
-    #     with st.container(border=True):
-    #         st.warning('Create a project first and then select! See left panel sidepanel.')
 
     # API-End points
     _update_endpoint()
-    # colm1, colm2 = st.columns([1, 1])
-    # with colm1:
-
     # API-End points
     _update_model()
+    # Set temp dir
+    _update_tempdir()
+    # Set bitrate
+    _update_bitrate()
 
+#%%
+def _update_bitrate():
+    with st.container(border=True):
+        st.subheader('Bitrate', divider='gray')
+        st.caption('Set the bitrate of the audio files. Note that Whisper uses 16k bitrate and is therefore recommend for usage.')
+        set_user_bitrate = st.slider("bitrate", min_value=16, max_value=128, value=24, step=8)
+        set_user_bitrate_str = str(set_user_bitrate) + 'k'
+        # Store
+        if st.session_state['bitrate'] != set_user_bitrate_str:
+            st.session_state['bitrate'] = set_user_bitrate_str
 
+#%%
+def _update_tempdir():
     # with colm1:
     with st.container(border=True):
         st.subheader('Temp directory', divider='gray')
@@ -37,34 +45,22 @@ def run_main():
             project_name = ''
         else:
             project_name = project_name.strip()
-    
+
         # Store
         project_path = os.path.join(temp_dir, project_name)
         if project_path != st.session_state['project_path']:
             st.session_state['temp_dir'] = temp_dir
-            # st.session_state['project_name'] = project_name
-            # st.session_state['project_path'] = project_path
-            # st.session_state["save_path"] = os.path.join(st.session_state['project_path'], 'session_states.pkl')
             set_project_paths(project_name)
-    
+
             if not os.path.exists(st.session_state['project_path']):
                 os.makedirs(st.session_state['project_path'])
                 st.success(f"Project directory: {st.session_state['project_path']}")
                 st.rerun()
             else:
                 st.success(f"Project directory: {st.session_state['project_path']}")
-    
-    with st.container(border=True):
-        st.subheader('Bitrate', divider='gray')
-        st.caption('Set the bitrate of the audio files. Note that Whisper uses 16k bitrate and is therefore recommend for usage.')
-        set_user_bitrate = st.slider("bitrate", min_value=16, max_value=128, value=24, step=8)
-        set_user_bitrate_str = str(set_user_bitrate) + 'k'
-        # Store
-        if st.session_state['bitrate'] != set_user_bitrate_str:
-            st.session_state['bitrate'] = set_user_bitrate_str
-            # st.info(f"Bitrate is udpated to {st.session_state['bitrate']}")
 
-# @st.fragment
+
+#%%
 def _update_endpoint():
     with st.container(border=True):
         col1, col2 = st.columns([0.5, 0.5])
@@ -81,14 +77,12 @@ def _update_endpoint():
             # st.rerun()
 
         col2.subheader('Select API-endpoint', divider='gray')
-        # if st.session_state['model'] != 'gpt-4o-mini':
-        # index = st.session_state['endpoints'].index(st.session_state['endpoint'])
-        # st.write(index)
-        user_select_endpoint = col2.selectbox(label='Select endpoint', options=st.session_state['endpoints'], index=None, label_visibility='collapsed')
+        index = st.session_state['endpoints'].index(st.session_state['endpoint']) if 'endpoint' in st.session_state and st.session_state['endpoint'] in st.session_state['endpoints'] else None
+
+        user_select_endpoint = col2.selectbox(label='Select endpoint', options=st.session_state['endpoints'], index=index, label_visibility='collapsed')
         if st.session_state['endpoint'] is not None or user_select_endpoint != st.session_state['endpoint']:
             st.session_state['endpoint'] = user_select_endpoint
             # st.info(f'Endpoint is updated to {st.session_state["endpoint"]}')
-            # st.rerun()
 
         col1.caption('Selected API Endpoint')
         col1.text_input('Selected API Endpoint', value=st.session_state['endpoint'], disabled=True, label_visibility='collapsed')
@@ -115,21 +109,16 @@ def _update_model():
 
         modelname = col1.selectbox('llm models', options=st.session_state['model_names'], index=index, label_visibility='collapsed')
 
-        if col2.button('Select LLM model', type='primary'):# and modelname != st.session_state['model']:
+        if col2.button('Set LLM model', type='primary'):# and modelname != st.session_state['model']:
             llm = load_llm_model(modelname=modelname)
             with st.spinner(f'Checking: {llm.modelname}'):
-                response = llm.run(f'Promote yourself in maximum 2 sentences how good you are in the job of making sense of transcriptions! Start with "Thank you for selecting me"', system="You are a helpful and very happy assistant.")
-                if '404' in response[0:30]:
+                response = llm.prompt(f'Be extremely happy and promote yourself in one very short sentences!', system="You are a helpful and very happy assistant.")
+                if '400' in response[0:30] or '404' in response[0:30]:
                     st.error(f'❌ {modelname} is not available. Please select a different one.')
                 else:
                     st.success(f'✅ Model is updated to {modelname}!')
                     st.write(response)
                     st.session_state['model'] = modelname
-
-#%%
-def load_llm_model(modelname=''):
-    model = LLMlight(modelname=modelname, endpoint=st.session_state['endpoint'], temperature=0.7, top_p=0.9, embedding_method='bert', retrieval_method='naie_RAG')
-    return model
 
 # %%
 run_main()

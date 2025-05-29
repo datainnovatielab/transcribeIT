@@ -16,7 +16,7 @@ from nota_bene.utils import switch_page_button, create_audio_chunks, transcribe_
 def run_main():
     # Ensure necessary session state variables are initialized
     st.session_state.setdefault('edit_transcript_mode', False)
-    st.session_state.setdefault('transcript', '')
+    st.session_state.setdefault('context', '')
 
     # Header
     if st.session_state.get('project_name'):
@@ -32,7 +32,7 @@ def run_main():
         # Edit mode
         edited_transcript = st.text_area(
             label="Edit Transcript",
-            value=st.session_state['transcript'],
+            value=st.session_state['context'],
             height=400,
             label_visibility='collapsed',
             key="transcript_editor"
@@ -40,7 +40,7 @@ def run_main():
         col1, col2 = st.columns([0.2, 0.8])
         with col1:
             if st.button("💾 Save Transcript"):
-                st.session_state['transcript'] = edited_transcript
+                st.session_state['context'] = edited_transcript
                 st.session_state['edit_transcript_mode'] = False
                 save_session(save_audio=True)
                 st.success("Transcript updated.")
@@ -52,7 +52,7 @@ def run_main():
     else:
         # View mode
         with st.container(border=True, height=400):
-            st.markdown(st.session_state['transcript'], unsafe_allow_html=True)
+            st.markdown(st.session_state['context'], unsafe_allow_html=True)
         if st.button("✏️ Edit Transcript"):
             st.session_state['edit_transcript_mode'] = True
             st.rerun()

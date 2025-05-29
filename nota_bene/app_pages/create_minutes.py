@@ -10,8 +10,7 @@ from io import BytesIO
 import streamlit as st
 from markdown_pdf import MarkdownPdf, Section
 from openai import OpenAI
-from nota_bene.utils import switch_page_button, save_session
-from LLMlight import LLMlight
+from nota_bene.utils import switch_page_button, save_session, load_llm_model
 
 #%% Create header
 @st.dialog("Key?")
@@ -27,7 +26,7 @@ def run_main():
     if st.session_state['project_name']:
         st.header('Create Minutes: ' + st.session_state['project_name'], divider=True)
 
-    if st.session_state['transcript']:
+    if st.session_state['context']:
         # switch_page_button("app_pages/transcribe.py", text="The Transcripts are a must to create minute notes.")
 
         with st.container(border=True):
@@ -55,7 +54,7 @@ def run_main():
                     else:
                         col2.write("❌ API-key not found")
 
-            # Run LLM
+            # Run local LLM
             if user_press and st.session_state['model'] == 'gpt-4o-mini':
                 run_openai()
             elif user_press:
@@ -72,11 +71,11 @@ def run_main():
 def show_minutes():
     st.session_state.setdefault("edit_mode_minutes", False)
 
-    with st.container(border=True):
-        if not st.session_state.get("minutes"):
-            st.info("Minutes notes are not found.")
-            return
+    if not st.session_state.get("minutes"):
+        # st.info("Minutes notes are not found.")
+        return
 
+    with st.container(border=True):
         if st.session_state["edit_mode_minutes"]:
             # Editable mode
             updated_minutes = st.text_area(
@@ -115,43 +114,55 @@ def navigation():
             if st.session_state["minutes"]:
                 st.download_button("Download notulen (.md)", file_name="notulen.md", data=st.session_state["minutes"], type='primary')
         with col3:
-            if st.session_state["minutes"]:
-                pdf = MarkdownPdf(toc_level=2)
+            if st.session_state["minutes"] is not None and st.session_state["minutes"] != '':
+                pdf = MarkdownPdf(toc_level=1)
                 f = BytesIO()
                 pdf.add_section(Section(st.session_state["minutes"]))
                 pdf.save(f)
                 st.download_button("Download notulen (.pdf)", file_name="notulen.pdf", data=f, type='primary')
 
+
 # %%
+@st.fragment
 def run_local_llm():
-    from nota_bene.utils import API_LLM
-    
-    # Get prompts
-    system_prompt = st.session_state['prompt']
-    prompt = st.session_state['transcript']
-    
     # Initialize
-    model = API_LLM(model_id=st.session_state['model'], api_url=st.session_state['endpoint'], temperature=0.7)
-    response = model.run(f"{system_prompt}\n\n{prompt}")
-    
-    # system_prompt = "You are an AI assistant"
-    # prompt = "hi"
-    # payload = {
-    #     "model": user_select,
-    #     "prompt": f"{system_prompt}\n\n{prompt}",
-    #     "prompt": prompt,
-    #     "stream": False
-    #     }
-    
-    # response = requests.post('http://localhost:11434/api/generate', json=payload)
-    
-    # # st.write(response.text)
-    # # print(response.text)
-    # response = json.loads(response.text)
-    # response = response['response']
-    
-    st.session_state["minutes"] = response
-    save_session()
+    # model = load_llm_model(modelname=st.session_state['model'])
+    # st.write(st.session_state['context'])
+    response=''
+
+    # response = model.prompt(f'Be extremely happy and promote yourself in one very short sentences!', system='You are an AI assistent using the langauge that is provided in the context.')
+    # st.success(f'✅ {model.modelname} is successfully loaded!')
+    system = """Je bent een AI-assistent gespecialiseerd in het omzetten van
+    transcripties naar gestructureerde en overzichtelijke notulen. Jouw taak is om van een
+    transcriptie een professioneel verslag te maken, zelfs als de transcriptie afkomstig is
+    van automatische spraak-naar-tekst software en fouten kan bevatten.
+    """
+    instructions = """Je ontvangt een transcriptie van de gebruiker als input. Zet deze direct om in volledig
+    gestructureerde en gepolijste notulen volgens de bovenstaande richtlijnen.
+    Wanneer je klaar bent, geef je alleen het uiteindelijke verslag als output, zonder verdere uitleg.
+    """
+
+    # Get output
+    with st.spinner(f"Running {st.session_state['model']}"):
+        # Initialize model
+        model = load_llm_model(modelname=st.session_state['model'],
+                               method='global_reasoning',
+                               verbose='debug')
+        # Run model
+        response = model.prompt(query=st.session_state['instruction'],
+                           instructions=instructions,
+                           context=st.session_state['context'],
+                           system=system,
+                           )
+
+        if '400' in response[0:30] or '404' in response[0:30] or response == '':
+            # response = model.prompt(f'An error occured: {response}. Explain what could have gone wrong for creating minute notes from transcriptions using you as a model having {len(st.session_state["instruction"])} chars in the context.', system='You are an helpfull AI assistent .')
+            # st.write(response)
+            st.error(f'❌ Model failed to generate output. Try a different model.')
+        else:
+            st.session_state["minutes"] = response
+            save_session()
+            st.rerun()
 
 # %%
 def run_openai():
@@ -162,9 +173,11 @@ def run_openai():
         messages=[
             {
                 "role": "system",
-                "content": st.session_state['prompt'],
+                "content": st.session_state['instruction'],
             },
-            {"role": "user", "content": st.session_state['transcript']},
+            {
+                "role": "user",
+                "content": st.session_state['context']},
         ],
         stream=True,
     )

@@ -15,7 +15,7 @@ init_session_keys()
 def main():
     # Debug
     # for key, value in st.session_state.items():
-    #     if key=='prompt' or key=='audio':
+    #     if key=='instruction' or key=='audio':
     #         st.write(f"{key} = {value is None}")
     #     else:
     #         st.write(f"{key} = {value}")
@@ -32,11 +32,11 @@ def main():
                 st.Page("app_pages/audio_playback.py", title=("✅ " if st.session_state.get('audio') else "❗") + "Playback Recordings"),
             ],
             "Transcription": [
-                st.Page("app_pages/transcribe.py", title=("✅ " if st.session_state.get('transcript') else "❗") + "Run Transcription"),
-                st.Page("app_pages/transcribe_edit.py", title=("✅ " if st.session_state.get('transcript') else "❗") + "Edit Transcription"),
+                st.Page("app_pages/transcribe.py", title=("✅ " if st.session_state.get('context') else "❗") + "Run Transcription"),
+                st.Page("app_pages/transcribe_edit.py", title=("✅ " if st.session_state.get('context') else "❗") + "Edit Transcription"),
             ],
             "Notuleren": [
-                st.Page("app_pages/model_instructions.py", title=("✅ " if st.session_state.get('prompt') else "❗") + "Model Instruction"),
+                st.Page("app_pages/model_instructions.py", title=("✅ " if st.session_state.get('instruction') else "❗") + "Model Instruction"),
                 st.Page("app_pages/create_minutes.py", title=("✅ " if st.session_state.get('minutes') else "❗") + "Create Minute Notes"),
 
             ],
@@ -71,7 +71,7 @@ def sidebar():
     # Display in listbox if available
     col1, col2 = st.sidebar.columns([0.5, 0.5])
     # Selectbox
-    col1.caption('Select to Load Project')
+    col1.caption('Select Project (auto loaded)')
     options = list_subdirectories(st.session_state['temp_dir'])
     index = options.index(st.session_state["project_name"]) if st.session_state["project_name"]!='' in options else None
     project_name = col1.selectbox("Select a Project", options=options, index=index, label_visibility='collapsed', help='Select project')
@@ -95,19 +95,8 @@ def sidebar():
         enter_project_name()
         init_session_keys(overwrite=True)
 
-
     st.sidebar.caption(f"{st.session_state['project_path']}")
     st.sidebar.divider()
-
-    # if st.sidebar.button("OpenAI-key invoeren"):
-    #     enter_api_key()
-    # if st.session_state['model'] == 'gpt-4o-mini':
-    #     if st.session_state["openai_api_key"]:
-    #         st.sidebar.write("✅ Je hebt een API-key ingevoerd")
-    #     else:
-    #         st.sidebar.write("❌ Je hebt nog geen API-key ingevoerd")
-
-    # st.sidebar.divider()
 
     cols = st.sidebar.columns([0.5, 0.5])
     if st.session_state['project_name'] is not None and st.session_state['project_name'] != '':

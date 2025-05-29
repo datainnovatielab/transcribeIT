@@ -51,7 +51,7 @@ def run_main():
         with col2:
             st.metric("Total Time", f"{np.sum(st.session_state['timings']):.1f} min")
         with col3:
-            st.metric("Words", f"{len(st.session_state['transcript'].split(' ')):.0f}")
+            st.metric("Words", f"{len(st.session_state['context'].split(' ')):.0f}")
 
     # Show continue button
     with st.container(border=True):
@@ -103,13 +103,13 @@ def run_transcription():
         # 1. Cut the audio file in chunks of 30minutes
         # 2. Transcribe per chunk
         # 3. Stack all text together
-        if load_transcript_userselect and st.session_state['transcript']:
+        if load_transcript_userselect and st.session_state['context']:
             st.warning("Transcription is already performed and loaded. Uncheck to run again the transcription.")
             return
         else:
             st.session_state['timings'] = []
-            st.session_state['transcript'] = None
-            st.warning("Transcription is running now. Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
+            st.session_state['context'] = None
+            st.warning("Transcription is running! Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
 
         status_placeholder = st.empty()
         status_placeholder2 = st.empty()
@@ -204,31 +204,17 @@ def run_transcription():
                     <strong>Chunk {i + 1} of {len(audio_chunks)}</strong><br>
                     Model: <span style="color:#2563EB;"><code>Whisper-{model_type}</code></span> |
                     Environment: <span style="color:#10B981;"><code>{envtype}</code></span><br>
-                    Avg chunk time: <strong>{avg_time:.1f} min</strong><br>
-                    Estimated time left: <strong>{estimated_time_left}</strong> | 
-                    <strong>{formatted_completion_time}</strong>
+                    Average chunk time: <strong>{avg_time:.1f} min</strong> | Total chunks: {len(audio_chunks)}<br>
+                    Estimated time left: <strong>{estimated_time_left}</strong> | {formatted_completion_time}
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            # status_placeholder.markdown(
-            #     f"""
-            #     <div style="padding: 1em; border-radius: 8px; background-color: #F3F4F6; color: #111827;">
-            #         <strong>Chunk {i + 1} of {len(audio_chunks)}</strong><br>
-            #         Model: <span style="color:#2563EB;"><code>Whisper-{model_type}</code></span> |
-            #         Environment: <span style="color:#10B981;"><code>{envtype}</code></span><br>
-            #         Avg chunk time: <strong>{avg_time:.1f} min</strong><br>
-            #         Estimated time left: <strong>{estimated_time_left}</strong>
-            #     </div>
-            #     """,
-            #     unsafe_allow_html=True
-            # )
-
         # Timings
         if len(timings) > 0: st.session_state['timings'] = timings
         # Create one big transcript
-        st.session_state['transcript'] = ' '.join(transcripts)
+        st.session_state['context'] = ' '.join(transcripts)
         # Save session
         save_session()
         return True

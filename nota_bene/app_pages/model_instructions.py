@@ -3,11 +3,12 @@
 import streamlit as st
 from nota_bene.utils import switch_page_button
 
+#%%
 @st.fragment
 def run_main():
     # Ensure session state variables are initialized
     st.session_state.setdefault('edit_mode', False)
-    st.session_state.setdefault('prompt', '')
+    st.session_state.setdefault('instruction', '')
 
     # Header based on project name
     if st.session_state.get('project_name'):
@@ -27,14 +28,14 @@ def run_main():
     col2.caption('Load the default prompt')
     load_button = col2.button('Load prompt', type='primary', use_container_width=True)
     if load_button and selected_prompt != '-- Selecteer een prompt --':
-        st.session_state['prompt'] = st.session_state['instructions'][selected_prompt]
+        st.session_state['instruction'] = st.session_state['instructions'][selected_prompt]
 
     # Toggle button logic
     if st.session_state['edit_mode']:
         # Edit mode
         edited_text = st.text_area(
             label='Edit Instructions',
-            value=st.session_state['prompt'],
+            value=st.session_state['instruction'],
             label_visibility='collapsed',
             height=1000,
             key='instruction_editor'
@@ -42,7 +43,7 @@ def run_main():
         col1, col2 = st.columns([0.2, 0.8])
         with col1:
             if st.button("💾 Save"):
-                st.session_state['prompt'] = edited_text
+                st.session_state['instruction'] = edited_text
                 st.session_state['edit_mode'] = False
                 st.success("Instructions updated.")
                 st.rerun()
@@ -53,8 +54,8 @@ def run_main():
     else:
         # View mode
         with st.container(border=True, height=1000):
-            st.markdown(st.session_state['prompt'])
-        if st.button("✏️ Edit Instructions"):
+            st.markdown(st.session_state['instruction'])
+        if st.button("✏️ Edit Instruction"):
             st.session_state['edit_mode'] = True
             st.rerun()
 

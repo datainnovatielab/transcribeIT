@@ -14,6 +14,7 @@ from pathlib import Path
 import logging
 import pypickle
 import nota_bene.prompts as prompts
+from LLMlight import LLMlight
 
 try:
     import whisper
@@ -24,8 +25,20 @@ import streamlit as st
 from openai import OpenAI
 import tempfile
 
-#%%
 
+#%%
+def load_llm_model(modelname='', method='naive_RAG', verbose='info'):
+    model = LLMlight(modelname=modelname,
+                     endpoint=st.session_state['endpoint'],
+                     temperature=0.7,
+                     top_p=1,
+                     method=method,
+                     chunks={'type': 'words', 'size': 1000, 'n': 5},
+                     verbose=verbose,
+                     )
+    return model
+
+#%%
 def switch_page_button(page: st.Page, text: str | None = None, button_type: str = 'secondary'):
     """
     Generate a button in the Streamlit app to switch to another page.
@@ -111,9 +124,9 @@ def init_session_keys(overwrite=False):
     init_session_key("model", default_value="gpt-4o-mini", overwrite=False)
     init_session_key("model_names", default_value=["gpt-4o-mini"], overwrite=False)
     init_session_key("model_type", default_value='turbo', overwrite=False)
-    init_session_key("prompt", default_value=prompts.minute_notes()['Minute Notes'], overwrite=False)
     init_session_key("save_path", default_value=None, overwrite=False)
 
+    init_session_key("instruction", default_value=prompts.minute_notes()['Minute Notes'], overwrite=False)
     if 'instructions' not in st.session_state:
         st.session_state['instructions'] = {**prompts.minute_notes(), **prompts.heisessie()}
 
@@ -121,13 +134,16 @@ def init_session_keys(overwrite=False):
     init_session_key("project_path", default_value='', overwrite=overwrite)
     init_session_key("audio_filepath", default_value=None, overwrite=overwrite)
     init_session_key("audio", default_value=None, overwrite=overwrite)
-    init_session_key("transcript", overwrite=overwrite)
     init_session_key("minutes", overwrite=overwrite)
     init_session_key("audio_recording", default_value={}, overwrite=overwrite)
     init_session_key("audio_order", default_value=[], overwrite=overwrite)
     init_session_key("audio_names", default_value=[], overwrite=overwrite)
     init_session_key("bitrate", default_value='24k', overwrite=overwrite)
     init_session_key("timings", default_value=[], overwrite=overwrite)
+
+    init_session_key('query', overwrite=overwrite)
+    init_session_key('system', overwrite=overwrite)
+    init_session_key('context', overwrite=overwrite) # This is the transcript of the audio file
 
 
 def write_audio_to_disk(audio, filepath):
@@ -338,42 +354,42 @@ def bitrate_to_kbps(bitrate_str):
 
 
 #%% Define API-based Agent
-class API_LLM:
-    """ The Agent class.
-    1. Go the LM-studio.
-    2. Go to left panel and select developers mode
-    3. On top select your model of interest
-    4. Then go to settings in the top bar
-    5. Enable "server on local network" if you need
-    6. Enable Running
+# class API_LLM:
+#     """ The Agent class.
+#     1. Go the LM-studio.
+#     2. Go to left panel and select developers mode
+#     3. On top select your model of interest
+#     4. Then go to settings in the top bar
+#     5. Enable "server on local network" if you need
+#     6. Enable Running
 
-    Examples
-    --------
-    > model=API_LLM()
-    > model=API_LLM(model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions")
-    > model.run('hello who are you?')
+#     Examples
+#     --------
+#     > model=API_LLM()
+#     > model=API_LLM(model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions")
+#     > model.run('hello who are you?')
 
-    """
-    def __init__(self, model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions", temperature=0.7):
-        self.model_id = model_id
-        self.api_url = api_url
-        self.temperature = temperature
+#     """
+#     def __init__(self, model_id="openhermes-2.5-mistral-7b", api_url="http://localhost:1234/v1/chat/completions", temperature=0.7):
+#         self.model_id = model_id
+#         self.api_url = api_url
+#         self.temperature = temperature
     
-    def run(self, prompt):
-        import requests
+#     def run(self, prompt):
+#         import requests
         
-        headers = {"Content-Type": "application/json"}
-        data = {
-            "model": self.model_id,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": self.temperature
-        }
+#         headers = {"Content-Type": "application/json"}
+#         data = {
+#             "model": self.model_id,
+#             "messages": [{"role": "user", "content": prompt}],
+#             "temperature": self.temperature
+#         }
 
-        response = requests.post(self.api_url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json().get('choices', [{}])[0].get('message', {}).get('content', "No response")
-        else:
-            return f"Error: {response.status_code} - {response.text}"
+#         response = requests.post(self.api_url, headers=headers, json=data)
+#         if response.status_code == 200:
+#             return response.json().get('choices', [{}])[0].get('message', {}).get('content', "No response")
+#         else:
+#             return f"Error: {response.status_code} - {response.text}"
 
 #%%
 def list_subdirectories(dirname):

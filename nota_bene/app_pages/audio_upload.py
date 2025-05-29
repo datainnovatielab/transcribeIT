@@ -44,13 +44,6 @@ def run_main():
 
         if st.session_state['audio']:
             st.multiselect(label='Processed audio files', options=st.session_state['audio_names'], default=st.session_state['audio_names'], disabled=True)
-            # st.write(st.session_state['audio_names'])
-            # cols = st.columns(len(st.session_state['audio_names']))
-            # for i, audio_name in enumerate(st.session_state['audio_names']):
-            #     cols[i].button(audio_name, disabled=True)
-
-            # st.write(st.session_state['audio_filepath'])
-            # st.write(st.session_state['audio_names'])
             if st.button('Remove processed audio files'):
                 st.session_state['audio'] = None
                 st.session_state['audio_filepath'] = None
