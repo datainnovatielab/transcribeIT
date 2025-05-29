@@ -7,4 +7,5 @@ ffmpeg-setpath
 streamlit-audiorec
 openai-whisper
 pypickle
+llmlight
 # setuptools-rust
