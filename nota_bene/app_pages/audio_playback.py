@@ -11,13 +11,13 @@ def run_main():
     1. Playback Audio
 
     """
-
-    if st.session_state['project_name']:
-        st.header('Audio Playback For ' + st.session_state['project_name'], divider=True)
-    else:
+    if st.session_state['project_name'] == '' or st.session_state['project_name'] is None:
         with st.container(border=True):
             st.info('Each project starts with a name. Create your new project at the left sidepanel.')
             return
+    else:
+        st.header('Audio Playback: ' + st.session_state['project_name'], divider=True)
+
 
     with st.container(border=True):
         if st.session_state['audio']:
@@ -27,13 +27,17 @@ def run_main():
         st.caption("This is the final combined audio file.")
         st.audio(st.session_state['audio'])
 
+    # Navigation bar
+    navigation_panel()
+
+# %%
+def navigation_panel():
     with st.container(border=True):
         col1, col2 = st.columns([0.5, 0.5])
         with col1:
             switch_page_button("app_pages/audio_upload.py", text='Vorige Stap: Upload Audio files')
         with col2:
             switch_page_button("app_pages/transcribe.py", text='Volgende Stap: Transcribe Audio', button_type='primary')
-
 
 
 # %%

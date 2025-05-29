@@ -11,20 +11,21 @@ import streamlit as st
 from markdown_pdf import MarkdownPdf, Section
 from openai import OpenAI
 from nota_bene.utils import switch_page_button, save_session
+from LLMlight import LLMlight
 
 #%% Create header
 @st.dialog("Key?")
 def enter_api_key():
     """Enter OpenAI key in dialog window."""
     api_key = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"] or "", type="password")
-    if st.button("Bevestigen"):
+    if st.button("Proceed"):
         st.session_state["openai_api_key"] = api_key
         st.rerun()
 
 @st.fragment
 def run_main():
     if st.session_state['project_name']:
-        st.header('Create Minutes For ' + st.session_state['project_name'], divider=True)
+        st.header('Create Minutes: ' + st.session_state['project_name'], divider=True)
 
     if st.session_state['transcript']:
         # switch_page_button("app_pages/transcribe.py", text="The Transcripts are a must to create minute notes.")
@@ -33,7 +34,7 @@ def run_main():
             col1, col2 = st.columns(2)
 
             # Selectionbox
-            col1.caption('Select LLModel')
+            col1.caption('Select Large Language Model')
             options = st.session_state['model_names']
             user_model = col1.selectbox(label='Select model', options=options, index=options.index(st.session_state['model']), label_visibility='collapsed')
             if user_model != st.session_state['model']:
@@ -50,9 +51,9 @@ def run_main():
                     enter_api_key()
                 if st.session_state['model'] == 'gpt-4o-mini':
                     if st.session_state["openai_api_key"]:
-                        col2.write("✅ Je hebt een API-key ingevoerd")
+                        col2.write("✅ API-key found")
                     else:
-                        col2.write("❌ Je hebt nog geen API-key ingevoerd")
+                        col2.write("❌ API-key not found")
 
             # Run LLM
             if user_press and st.session_state['model'] == 'gpt-4o-mini':
@@ -73,7 +74,7 @@ def show_minutes():
 
     with st.container(border=True):
         if not st.session_state.get("minutes"):
-            st.info("Nog geen notulen beschikbaar.")
+            st.info("Minutes notes are not found.")
             return
 
         if st.session_state["edit_mode_minutes"]:

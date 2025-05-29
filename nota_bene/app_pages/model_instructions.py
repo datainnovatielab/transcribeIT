@@ -11,7 +11,7 @@ def run_main():
 
     # Header based on project name
     if st.session_state.get('project_name'):
-        st.header(f"Model Instructions For {st.session_state['project_name']}", divider=True)
+        st.header(f"Model Instructions: {st.session_state['project_name']}", divider=True)
     else:
         with st.container(border=True):
             st.info('Each project starts with a name. Create your new project at the left sidepanel.')

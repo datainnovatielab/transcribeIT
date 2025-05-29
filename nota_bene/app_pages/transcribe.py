@@ -20,7 +20,7 @@ from nota_bene.utils import switch_page_button, create_audio_chunks, transcribe_
 def run_main():
     run_status = False
     if st.session_state['project_name']:
-        st.header('Transcribe Audio Files For ' + st.session_state['project_name'], divider=True)
+        st.header('Transcribe Audio Files: ' + st.session_state['project_name'], divider=True)
     else:
         with st.container(border=True):
             st.info('Each project starts with a name. Create your new project at the left sidepanel.')
