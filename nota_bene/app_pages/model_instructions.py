@@ -24,11 +24,14 @@ def run_main():
     # Multiselect for choosing predefined instruction templates
     options = ["-- Selecteer een prompt --"] + list(st.session_state['instructions'].keys())
     col1.caption('Select The Prompt')
+
     selected_prompt = col1.selectbox("instructions", options=options, label_visibility='collapsed')
     col2.caption('Load the default prompt')
     load_button = col2.button('Load prompt', type='primary', use_container_width=True)
     if load_button and selected_prompt != '-- Selecteer een prompt --':
-        st.session_state['instruction'] = st.session_state['instructions'][selected_prompt]
+        instructions = st.session_state['instructions'][selected_prompt]['system'] + '\n' + st.session_state['instructions'][selected_prompt]['instructions'] + '\n\n' + st.session_state['instructions'][selected_prompt]['query']
+        st.session_state['instruction'] = instructions
+        st.session_state['instruction_name'] = selected_prompt
 
     # Toggle button logic
     if st.session_state['edit_mode']:

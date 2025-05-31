@@ -8,12 +8,12 @@ full prompt template used in generating structured meeting minutes.
 
 from io import BytesIO
 import os
+import numpy as np
 import subprocess
 import json
 from pathlib import Path
 import logging
 import pypickle
-import nota_bene.prompts as prompts
 from LLMlight import LLMlight
 
 try:
@@ -126,9 +126,9 @@ def init_session_keys(overwrite=False):
     init_session_key("model_type", default_value='turbo', overwrite=False)
     init_session_key("save_path", default_value=None, overwrite=False)
 
-    init_session_key("instruction", default_value=prompts.minute_notes()['Minute Notes'], overwrite=False)
-    if 'instructions' not in st.session_state:
-        st.session_state['instructions'] = {**prompts.minute_notes(), **prompts.heisessie()}
+    init_session_key("instruction_name", default_value=None, overwrite=overwrite)
+    init_session_key("instruction", default_value=None, overwrite=overwrite)
+    init_session_key("instructions", default_value=load_user_prompts(), overwrite=overwrite)
 
     init_session_key("project_name", default_value='', overwrite=overwrite)
     init_session_key("project_path", default_value='', overwrite=overwrite)
@@ -140,6 +140,7 @@ def init_session_keys(overwrite=False):
     init_session_key("audio_names", default_value=[], overwrite=overwrite)
     init_session_key("bitrate", default_value='24k', overwrite=overwrite)
     init_session_key("timings", default_value=[], overwrite=overwrite)
+    init_session_key("timings_llm", default_value=[], overwrite=overwrite)
 
     init_session_key('query', overwrite=overwrite)
     init_session_key('system', overwrite=overwrite)
@@ -409,9 +410,51 @@ def set_project_paths(project_name):
 
 def save_session(save_audio=True):
     if save_audio:
-        filtered_states = {k: v for k, v in st.session_state.items() if k != 'demo'}
+        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('demo', 'model_names')}
         pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
     else:
-        filtered_states = {k: v for k, v in st.session_state.items() if k != 'audio'}
+        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('audio', 'model_names')}
         pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
     st.success('✅ Completed and session is saved!')
+
+
+#%%
+@st.cache_data
+def load_user_prompts(path="./nota_bene/user_prompts", getfiles=None):
+    # getfiles='minute_notes.txt'
+    # getfiles = ['minute_notes.txt', 'heisessie.txt']
+
+    prompts = {}
+    if getfiles is not None and isinstance(getfiles, str):
+        getfiles = [getfiles]
+
+    for filename in os.listdir(path):
+        if filename.endswith(".txt"):
+            if getfiles is not None and (not np.isin(filename, getfiles)):
+                continue
+
+            filepath = os.path.join(path, filename)
+            with open(filepath, encoding="utf-8") as f:
+                content = f.read()
+
+            parts = {
+                "system": "",
+                "query": "",
+                "instructions": ""
+            }
+
+            current_key = None
+            for line in content.splitlines():
+                line = line.strip()
+                if line.endswith(":") and line[:-1] in parts:
+                    current_key = line[:-1]
+                    continue
+                if current_key:
+                    parts[current_key] += line + "\n"
+
+            # Strip trailing whitespace and store
+            name_without_ext = os.path.splitext(filename)[0]
+            prompts[name_without_ext] = {k: v.strip() for k, v in parts.items()}
+
+    return prompts
+
