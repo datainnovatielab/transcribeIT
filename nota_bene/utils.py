@@ -410,10 +410,10 @@ def set_project_paths(project_name):
 
 def save_session(save_audio=True):
     if save_audio:
-        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('demo', 'model_names')}
+        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('demo')}
         pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
     else:
-        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('audio', 'model_names')}
+        filtered_states = {k: v for k, v in st.session_state.items() if k not in ('audio')}
         pypickle.save(st.session_state["save_path"], filtered_states, overwrite=True)
     st.success('✅ Completed and session is saved!')
 

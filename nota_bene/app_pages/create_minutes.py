@@ -33,12 +33,17 @@ def run_main():
         # switch_page_button("app_pages/transcribe.py", text="The Transcripts are a must to create minute notes.")
 
         with st.container(border=True):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([0.5, 0.5])
 
             # Selectionbox
             col1.caption('Select Large Language Model')
             options = st.session_state['model_names']
-            user_model = col1.selectbox(label='Select model', options=options, index=options.index(st.session_state['model']), label_visibility='collapsed')
+            try:
+                index = options.index(st.session_state['model'])
+            except:
+                index = None
+
+            user_model = col1.selectbox(label='Select model', options=options, index=index, label_visibility='collapsed')
             if user_model != st.session_state['model']:
                 st.session_state['model'] = user_model
                 st.rerun()
@@ -46,6 +51,9 @@ def run_main():
             # Button
             col2.caption('Create Minute Notes')
             user_press = col2.button(f"Run LLM!", type='primary', use_container_width=True)
+
+            user_summarize = col1.checkbox('Summarize results', label_visibility='visible')
+            user_method = col2.radio('Approach', options=['Global reasoning', 'Chunk-Wise'], label_visibility='visible')
 
             # Show key
             if st.session_state['model'] == 'gpt-4o-mini':
@@ -61,7 +69,7 @@ def run_main():
             if user_press and st.session_state['model'] == 'gpt-4o-mini':
                 run_openai()
             elif user_press:
-                run_local_llm()
+                run_local_llm(method=user_method, summarize=user_summarize)
 
     # Show minutes
     show_minutes()
@@ -94,14 +102,24 @@ def show_minutes():
             with col2:
                 st.metric("Total Time", f"{np.sum(st.session_state['timings_llm']):.1f} min")
             with col3:
-                st.metric("Words", f"{len(st.session_state['minutes'].split(' ')):.0f}")
+                try:
+                    if st.session_state['minutes'] is not None:
+                        st.metric("Words", f"{len(st.session_state['minutes'].split(' ')):.0f}")
+                except:
+                    st.metric("Words", 0)
+                    # st.session_state['minutes'] = None
 
     with st.container(border=True):
         if st.session_state["edit_mode_minutes"]:
             # Editable mode
+            if isinstance(st.session_state["minutes"], list):
+                minute_notes =  "\n\n---\n\n".join([f"### Results {i+1}:\n{s}" for i, s in enumerate(st.session_state["minutes"])])
+            else:
+                minute_notes = st.session_state["minutes"]
+
             updated_minutes = st.text_area(
                 label="Edit Minutes",
-                value=st.session_state["minutes"],
+                value=minute_notes,
                 height=1000,
                 label_visibility="collapsed",
                 key="minutes_editor"
@@ -120,9 +138,12 @@ def show_minutes():
         else:
             # View mode
             st.markdown(st.session_state["minutes"])
-            if st.button("✏️ Edit Minutes"):
+            col1, col2 = st.columns(2)
+            if col1.button("✏️ Edit Minutes"):
                 st.session_state["edit_mode_minutes"] = True
                 st.rerun()
+            # if col2.button("Summarize"):
+                # st.warning('do stuff')
 
 # %%
 def navigation():
@@ -136,45 +157,32 @@ def navigation():
                 st.download_button("Download notulen (.md)", file_name="notulen.md", data=st.session_state["minutes"], type='primary')
         with col3:
             if st.session_state["minutes"] is not None and st.session_state["minutes"] != '':
-                pdf = MarkdownPdf(toc_level=1)
-                f = BytesIO()
-                pdf.add_section(Section(st.session_state["minutes"]))
-                pdf.save(f)
-                st.download_button("Download notulen (.pdf)", file_name="notulen.pdf", data=f, type='primary')
-
+                try:
+                    pdf = MarkdownPdf(toc_level=1)
+                    f = BytesIO()
+                    pdf.add_section(Section(st.session_state["minutes"]))
+                    pdf.save(f)
+                    st.download_button("Download notulen (.pdf)", file_name="notulen.pdf", data=f, type='primary')
+                except Exception as e:
+                    st.error(f'❌ Unexpected error. {e}')
 
 # %%
 @st.fragment
-def run_local_llm():
+def run_local_llm(method='Global reasoning', summarize=True):
     # Initialize
-    # model = load_llm_model(modelname=st.session_state['model'])
+    st.write(f"✅ Instructions are loaded: **{st.session_state['instruction_name']}**")
+    st.write(f"✅ Model is loaded: **{st.session_state['model']}**")
+    st.write(f"✅ Method: **{method}** with summarization: **{summarize}**")
+
     # st.write(st.session_state['context'])
     if st.session_state['instruction_name'] is None:
         st.warning('Instructions must be selected first.')
         return
 
-    response=''
-    
+    response = ''
     instruction_name = st.session_state['instruction_name']
     prompt = st.session_state['instructions'][instruction_name]
-    
-    st.write(prompt['query'])
-    st.write(prompt['instructions'])
-    st.write(prompt['system'])
 
-    # response = model.prompt(f'Be extremely happy and promote yourself in one very short sentences!', system='You are an AI assistent using the langauge that is provided in the context.')
-    # st.success(f'✅ {model.modelname} is successfully loaded!')
-    # system = """Je bent een Nederlandse AI-assistent gespecialiseerd in het omzetten van
-    # transcripties naar gestructureerde en overzichtelijke notulen. Jouw taak is om van een
-    # transcriptie een professioneel verslag te maken, zelfs als de transcriptie afkomstig is
-    # van automatische spraak-naar-tekst software en fouten kan bevatten.
-    # """
-    # instructions = """Je ontvangt een transcriptie van de gebruiker als input. Zet deze direct om in volledig
-    # gestructureerde en gepolijste notulen volgens de bovenstaande richtlijnen.
-    # Wanneer je klaar bent, geef je alleen het uiteindelijke verslag als output, zonder verdere uitleg.
-    # """
-
-    # Get output
     try:
         with st.spinner(f"Running {st.session_state['model']}"):
             start_time = time.time()
@@ -183,34 +191,51 @@ def run_local_llm():
             model = LLMlight(modelname=st.session_state['model'],
                              endpoint=st.session_state['endpoint'],
                              # method='chunk-wise',
-                             method='global_reasoning',
+                             # method='global_reasoning',
                              temperature=0.8,
                              top_p=1,
-                             chunks={'type': 'chars', 'size': 5000, 'overlap': 2000},
+                             chunks={'type': 'chars', 'size': 6000, 'overlap': 2000},
                              n_ctx=4096,
                              verbose='info',
                              )
-    
+
             # Run model
-            response = model.prompt(prompt['query'],
-                               instructions=prompt['instructions'],
-                               context=st.session_state['context'],
-                               system=prompt['system'],
-                               stream=False,
-                               )
-    
-            duration = (time.time() - start_time) / 60  # Convert to minutes
-    
-            if (response is None) or ('400' in response[0:30]) or ('404' in response[0:30]) or (response.strip() == ''):
-                st.error(f'❌ Model failed to generate output. Try a different model.')
-                st.write(response)
+            # response = model.prompt(prompt['query'],
+            #                    context=st.session_state['context'],
+            #                    instructions=prompt['instructions'],
+            #                    system=prompt['system'],
+            #                    stream=False,
+            #                    )
+
+            if method=='Global reasoning':
+                response = model.global_reasoning(prompt['query'],
+                                   context=st.session_state['context'],
+                                   instructions=prompt['instructions'],
+                                   system=prompt['system'],
+                                   return_per_chunk=~summarize,
+                                   stream=False,
+                                   )
             else:
-                st.session_state['timings_llm'].append(duration)
+                response = model.chunk_wise(prompt['query'],
+                                   context=st.session_state['context'],
+                                   instructions=prompt['instructions'],
+                                   system=prompt['system'],
+                                   return_per_chunk=~summarize,
+                                   top_chunks=0,
+                                   stream=False,
+                                   )
+
+            duration = (time.time() - start_time) / 60  # Convert to minutes
+            st.session_state['timings_llm'].append(duration)
+            if isinstance(response, (str, list)):
                 st.session_state["minutes"] = response
                 save_session()
                 st.rerun()
-    except:
-        st.write(response)
+            else:
+                st.write(response)
+    except Exception as e:
+        st.error(f'❌ Unexpected error. {e}')
+
 
 # %%
 def run_openai():
