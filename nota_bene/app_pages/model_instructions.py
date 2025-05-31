@@ -57,7 +57,7 @@ def run_main():
     else:
         # View mode
         with st.container(border=True, height=1000):
-            st.markdown(st.session_state['instruction'])
+            st.markdown('Load your prompt with the instructions of interest.' if st.session_state['instruction'] is None else st.session_state['instruction'])
         if st.button("✏️ Edit Instruction"):
             st.session_state['edit_mode'] = True
             st.rerun()
@@ -69,6 +69,7 @@ def run_main():
             switch_page_button("app_pages/transcribe_edit.py", text='Previous Step: Edit Transcription')
         with col2:
             switch_page_button("app_pages/create_minutes.py", text='Next Step: Create Minute Notes', button_type='primary')
+
 
 
 # %%
