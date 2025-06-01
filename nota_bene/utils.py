@@ -3,7 +3,7 @@ Utility functions for handling audio transcription and processing using OpenAI's
 
 This module provides functionality to transcribe audio files, manage session states
 and handle page switching in Streamlit applications. It also includes constants for the
-full prompt template used in generating structured meeting minutes.
+full prompt template used in generating structured meeting minute notes.
 """
 
 from io import BytesIO
@@ -134,7 +134,7 @@ def init_session_keys(overwrite=False):
     init_session_key("project_path", default_value='', overwrite=overwrite)
     init_session_key("audio_filepath", default_value=None, overwrite=overwrite)
     init_session_key("audio", default_value=None, overwrite=overwrite)
-    init_session_key("minutes", overwrite=overwrite)
+    init_session_key("minute_notes", overwrite=overwrite)
     init_session_key("audio_recording", default_value={}, overwrite=overwrite)
     init_session_key("audio_order", default_value=[], overwrite=overwrite)
     init_session_key("audio_names", default_value=[], overwrite=overwrite)

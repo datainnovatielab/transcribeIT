@@ -100,7 +100,7 @@ def run_transcription():
             """
         )
     elif user_press:
-        # 1. Cut the audio file in chunks of 30minutes
+        # 1. Cut the audio file in chunks of 30min
         # 2. Transcribe per chunk
         # 3. Stack all text together
         if load_transcript_userselect and st.session_state['context']:
@@ -162,7 +162,7 @@ def run_transcription():
                 # Get the transcript text
                 transcript_text = transcript.get('text', '')
                 # Store timings
-                duration = (time.time() - start_time) / 60  # Convert to minutes
+                duration = (time.time() - start_time) / 60  # Convert to min
 
             # Save transcript to cache
             with open(chunk_path, "w", encoding="utf-8") as f:
@@ -178,13 +178,13 @@ def run_transcription():
             remaining_chunks = len(audio_chunks) - (i + 1)
 
             # Format estimated time left
-            estimated_minutes = avg_time * remaining_chunks
-            estimated_time_left = 'To be estimated' if estimated_minutes < 0.1 else f"{round(estimated_minutes, 1)} min"
+            estimated_min = avg_time * remaining_chunks
+            estimated_time_left = 'To be estimated' if estimated_min < 0.1 else f"{round(estimated_min, 1)} min"
             # Calculate estimated finish time
-            if estimated_minutes < 0.1:
+            if estimated_min < 0.1:
                 formatted_completion_time = 'To be estimated'
             else:
-                estimated_completion_time = datetime.now() + timedelta(minutes=estimated_minutes)
+                estimated_completion_time = datetime.now() + timedelta(minutes=estimated_min)
                 formatted_completion_time = estimated_completion_time.strftime("%Y-%m-%d %H:%M:%S")
 
             # Show detailed progress text

@@ -37,7 +37,7 @@ def main():
             ],
             "Notuleren": [
                 st.Page("app_pages/model_instructions.py", title=("✅ " if st.session_state.get('instruction') else "❗") + "Model Instruction"),
-                st.Page("app_pages/create_minutes.py", title=("✅ " if st.session_state.get('minutes') else "❗") + "Create Minute Notes"),
+                st.Page("app_pages/create_minute_notes.py", title=("✅ " if st.session_state.get("minute_notes") else "❗") + "Create Minute Notes"),
 
             ],
             "Configurations": [

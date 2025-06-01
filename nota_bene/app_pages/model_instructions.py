@@ -68,7 +68,7 @@ def run_main():
         with col1:
             switch_page_button("app_pages/transcribe_edit.py", text='Previous Step: Edit Transcription')
         with col2:
-            switch_page_button("app_pages/create_minutes.py", text='Next Step: Create Minute Notes', button_type='primary')
+            switch_page_button("app_pages/create_minute_notes.py", text='Next Step: Create Minute Notes', button_type='primary')
 
 
 
