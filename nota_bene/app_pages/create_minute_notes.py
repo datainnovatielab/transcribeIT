@@ -202,15 +202,16 @@ def run_local_llm(preprocessing='Unlimited', summarize=True, chunk_size=8192):
             # Initialize model
             overlap = int(0.25 * chunk_size) if isinstance(chunk_size, (int, float)) else None
 
-            model = LLMlight(modelname=st.session_state['model'],
-                             endpoint=st.session_state['endpoint'],
-                             preprocessing=preprocessing,
-                             method=None,
+            model = LLMlight(model=st.session_state['model'],
+                             retrieval_method=None,
                              embedding=None,
+                             preprocessing=preprocessing,
+                             alpha=None,
                              temperature=0.8,
                              top_p=1,
-                             chunks={'type': 'chars', 'size': chunk_size, 'overlap': overlap},
+                             chunks={'method': 'chars', 'size': chunk_size, 'overlap': overlap},
                              n_ctx=16384,
+                             endpoint=st.session_state['endpoint'],
                              verbose='debug',
                              )
 

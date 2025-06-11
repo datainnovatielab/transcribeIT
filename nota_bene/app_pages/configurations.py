@@ -95,8 +95,8 @@ def _update_endpoint():
                     models = llm.get_available_models()
                     st.session_state['model_names'] = ['gpt-4o-mini'] + models
                     st.success('✅ Endpoint is updated and available models from API Endpoint can now be selected!')
-            except:
-                st.error('❌ Endpoint not valid! Please select another one.')
+            except Exception as e:
+                st.error(f'❌ Endpoint not valid! Please select another one. {e}')
 
 #%%
 def _update_model():

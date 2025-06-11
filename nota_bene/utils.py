@@ -27,13 +27,11 @@ import tempfile
 
 
 #%%
-def load_llm_model(modelname='', method='naive_RAG', verbose='info'):
-    model = LLMlight(modelname=modelname,
+def load_llm_model(modelname='', retrieval_method='naive_RAG', verbose='info'):
+    model = LLMlight(model=modelname,
+                     retrieval_method=retrieval_method,
+                     alpha=None,
                      endpoint=st.session_state['endpoint'],
-                     temperature=0.7,
-                     top_p=1,
-                     method=method,
-                     chunks={'type': 'words', 'size': 1000, 'n': 5},
                      verbose=verbose,
                      )
     return model
