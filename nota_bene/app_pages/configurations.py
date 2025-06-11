@@ -111,7 +111,7 @@ def _update_model():
 
         if col2.button('Set LLM model', type='primary'):# and modelname != st.session_state['model']:
             llm = load_llm_model(modelname=modelname)
-            with st.spinner(f'Checking: {llm.modelname}'):
+            with st.spinner(f'Checking: {llm.model}'):
                 response = llm.prompt(f'Be extremely happy and promote yourself in one very short sentences!', system="You are a helpful and very happy assistant.")
                 if '400' in response[0:30] or '404' in response[0:30]:
                     st.error(f'❌ {modelname} is not available. Please select a different one.')

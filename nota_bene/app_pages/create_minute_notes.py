@@ -194,68 +194,42 @@ def run_local_llm(preprocessing='Unlimited', summarize=True, chunk_size=8192):
     instruction_name = st.session_state['instruction_name']
     prompt = st.session_state['instructions'][instruction_name]
 
-    try:
-        with st.spinner(f"Running {st.session_state['model']}"):
-            start_time = time.time()
-            st.warning("LLM model is running! Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
+    # try:
+    with st.spinner(f"Running {st.session_state['model']}"):
+        start_time = time.time()
+        st.warning("LLM model is running! Avoid navigating away or interacting with the app until it finishes.", icon="⚠️")
 
-            # Initialize model
-            overlap = int(0.25 * chunk_size) if isinstance(chunk_size, (int, float)) else None
+        # Initialize model
+        overlap = int(0.25 * chunk_size) if isinstance(chunk_size, (int, float)) else None
 
-            model = LLMlight(model=st.session_state['model'],
-                             retrieval_method=None,
-                             embedding=None,
-                             preprocessing=preprocessing,
-                             alpha=None,
-                             temperature=0.8,
-                             top_p=1,
-                             chunks={'method': 'chars', 'size': chunk_size, 'overlap': overlap},
-                             n_ctx=16384,
-                             endpoint=st.session_state['endpoint'],
-                             verbose='debug',
-                             )
+        model = LLMlight(model=st.session_state['model'],
+                         retrieval_method='RAG_basic',
+                         embedding=None,
+                         preprocessing=preprocessing,
+                         alpha=None,
+                         temperature=0.8,
+                         top_p=1,
+                         chunks={'method': 'chars', 'size': chunk_size, 'overlap': overlap},
+                         n_ctx=16384,
+                         endpoint=st.session_state['endpoint'],
+                         verbose='info',
+                         )
 
-            # Run model
-            response = model.prompt(prompt['query'],
-                               instructions=prompt['instructions'],
-                               context=st.session_state['context'],
-                               system=prompt['system'],
-                               stream=False,
-                               )
+        # Run model
+        response = model.prompt(prompt['query'],
+                           instructions=prompt['instructions'],
+                           context=st.session_state['context'],
+                           system=prompt['system'],
+                           stream=False,
+                           )
 
-
-            # if method=='Global-reasoning':
-            #     response = model.global_reasoning(prompt['query'],
-            #                        context=st.session_state['context'],
-            #                        instructions=prompt['instructions'],
-            #                        system=prompt['system'],
-            #                        return_per_chunk=~summarize,
-            #                        stream=False,
-            #                        )
-            # elif method=='Chunk-Wise':
-            #     response = model.chunk_wise(prompt['query'],
-            #                        context=st.session_state['context'],
-            #                        instructions=prompt['instructions'],
-            #                        system=prompt['system'],
-            #                        return_per_chunk=~summarize,
-            #                        top_chunks=0,
-            #                        stream=False,
-            #                        )
-            # else:
-            #     response = model.prompt(prompt['query'],
-            #                        context=st.session_state['context'],
-            #                        instructions=prompt['instructions'],
-            #                        system=prompt['system'],
-            #                        stream=False,
-            #                        )
-
-            duration = (time.time() - start_time) / 60  # Convert to min
-            st.session_state['timings_llm'].append(duration)
-            st.session_state["minute_notes"] = response
-            save_session()
-            st.rerun()
-    except Exception as e:
-        st.error(f'❌ Unexpected error. {e}')
+        duration = (time.time() - start_time) / 60  # Convert to min
+        st.session_state['timings_llm'].append(duration)
+        st.session_state["minute_notes"] = response
+        save_session()
+        st.rerun()
+    # except Exception as e:
+    #     st.error(f'❌ Unexpected error. {e}')
 
 
 # %%
